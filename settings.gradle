@@ -1,0 +1,3 @@
+rootProject.name = 'bifunctor-io'
+
+include 'core'

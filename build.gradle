@@ -1,0 +1,31 @@
+apply plugin: 'io.codearte.nexus-staging'
+apply plugin: au.id.tmm.buildsrc.MyVersionPlugin
+apply plugin: 'idea'
+
+allprojects {
+  group = 'au.id.tmm'
+}
+
+description = 'A Bifunctor IO I decided to write'
+
+repositories {
+  mavenCentral()
+}
+
+apply plugin: org.scoverage.ScoveragePlugin.class
+
+wrapper {
+  distributionType = Wrapper.DistributionType.ALL
+  gradleVersion = '5.2.1'
+}
+
+dependencies {
+  scoverage "org.scoverage:scalac-scoverage-plugin${s}:$scoverageVersion"
+  scoverage "org.scoverage:scalac-scoverage-runtime${s}:$scoverageVersion"
+}
+
+task scoverage(type: org.scoverage.ScoverageAggregate)
+
+subprojects {
+  tasks.withType(org.scoverage.ScoverageReport) { rootProject.tasks.scoverage.dependsOn(it) }
+}
