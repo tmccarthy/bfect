@@ -1,3 +1,4 @@
 rootProject.name = 'bifunctor-io'
 
-include 'core'
+include 'core', 
+    'typeclasses'

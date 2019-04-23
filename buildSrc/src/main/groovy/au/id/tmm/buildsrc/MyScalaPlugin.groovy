@@ -42,6 +42,7 @@ class MyScalaPlugin implements Plugin<Project> {
             // Needed to produce scalatest report
             testRuntime 'org.pegdown:pegdown:1.4.2'
 
+            scalaCompilerPlugin "org.scalamacros:paradise_$scalaVersion:2.1.1"
             scalaCompilerPlugin "org.spire-math:kind-projector${s}:0.9.7"
         }
 

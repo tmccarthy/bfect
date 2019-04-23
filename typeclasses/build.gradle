@@ -1,0 +1,24 @@
+apply plugin: au.id.tmm.buildsrc.MyScalaPlugin
+
+description = 'Typeclasses for a Bifunctor IO I decided to write'
+
+extensions.add('myRelease', new au.id.tmm.buildsrc.MyReleasePlugin.MyReleasePluginExtension())
+
+myRelease {
+    githubUser = 'tmccarthy'
+    githubRepoName = 'bifunctor-io'
+
+    licenceName = 'BSD 3-Clause'
+    licenceUrl = 'https://opensource.org/licenses/BSD-3-Clause'
+
+    developerName = 'Timothy McCarthy'
+    developerEmail = 'ebh042@gmail.com'
+}
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: au.id.tmm.buildsrc.MyReleasePlugin
+
+dependencies {
+    compile "com.github.mpilquist:simulacrum${s}:0.16.0"
+}
