@@ -8,7 +8,13 @@ import scala.util.{Failure, Success, Try}
 
   def handleErrorWith[E1, A, E2](fea: F[E1, A])(f: E1 => F[E2, A]): F[E2, A]
 
-  def recoverWith[E1, A, E2 >: E1](fea: F[E1, A])(catchPf: PartialFunction[E1, F[E2, A]]): F[E2, A]
+  def recoverWith[E1, A, E2 >: E1](fea: F[E1, A])(catchPf: PartialFunction[E1, F[E2, A]]): F[E2, A] = {
+    val totalHandler: E1 => F[E2, A] = catchPf.orElse {
+      case e => leftPure(e)
+    }
+
+    handleErrorWith(fea)(totalHandler)
+  }
 
   def attempt[E, A](fea: F[E, A]): F[Nothing, Either[E, A]] =
     handleErrorWith {

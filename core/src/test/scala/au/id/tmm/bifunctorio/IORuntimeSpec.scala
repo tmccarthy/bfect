@@ -18,7 +18,7 @@ class IORuntimeSpec extends ImprovedFlatSpec {
     val io = IO.pure("hello")
       .flatMap(s => IO.leftPure(GenericError))
 
-    assert(runtime.run(io) === Left(IORuntime.Failure.Checked(GenericError)))
+    assert(runtime.run(io) === Left(Failure.Checked(GenericError)))
   }
 
   it can "run a sync action" in {
@@ -34,7 +34,7 @@ class IORuntimeSpec extends ImprovedFlatSpec {
       throw exception
     }
 
-    assert(runtime.run(io) === Left(IORuntime.Failure.Unchecked(exception)))
+    assert(runtime.run(io) === Left(Failure.Unchecked(exception)))
   }
 
   it can "run a sync action that throws an expected exception" in {
@@ -44,7 +44,7 @@ class IORuntimeSpec extends ImprovedFlatSpec {
       throw exception
     }
 
-    assert(runtime.run(io) === Left(IORuntime.Failure.Checked(exception)))
+    assert(runtime.run(io) === Left(Failure.Checked(exception)))
   }
 
   it can "run a sync action that throws an expected exception subtype" in {
@@ -54,7 +54,15 @@ class IORuntimeSpec extends ImprovedFlatSpec {
       case e: RuntimeException => e
     }
 
-    assert(runtime.run(io) === Left(IORuntime.Failure.Checked(exception)))
+    assert(runtime.run(io) === Left(Failure.Checked(exception)))
+  }
+
+  it can "run a fold action that changes the error type" in {
+    val io = IO.leftPure("Error")
+      .leftMap(s => s"Error: $s")
+
+    assert(runtime.run(io) === Left(Failure.Checked("Error: Error")))
+
   }
 
 }
