@@ -35,8 +35,6 @@ class MyScalaPlugin implements Plugin<Project> {
             scalaCompilerPlugin
         }
 
-        target.configurations.scalaCompilerPlugin.transitive = false
-
         target.dependencies {
             zinc "com.typesafe.zinc:zinc:$zincVersion"
 
@@ -48,9 +46,7 @@ class MyScalaPlugin implements Plugin<Project> {
             // Needed to produce scalatest report
             testRuntime 'org.pegdown:pegdown:1.4.2'
 
-            scalaCompilerPlugin "org.scalamacros:paradise_$scalaVersion:2.1.1"
             scalaCompilerPlugin "org.spire-math:kind-projector${s}:0.9.7"
-            scalaCompilerPlugin "org.scala-lang:scala-reflect:$scalaVersion"
         }
 
         target.tasks.withType(ScalaCompile) {

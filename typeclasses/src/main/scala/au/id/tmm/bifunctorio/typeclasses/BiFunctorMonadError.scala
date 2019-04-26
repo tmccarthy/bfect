@@ -1,10 +1,8 @@
 package au.id.tmm.bifunctorio.typeclasses
 
-import simulacrum.typeclass
-
 import scala.util.{Failure, Success, Try}
 
-@typeclass trait BiFunctorMonadError[F[+_, +_]] extends BiFunctorMonad[F] {
+trait BiFunctorMonadError[F[+_, +_]] extends BiFunctorMonad[F] {
 
   def handleErrorWith[E1, A, E2](fea: F[E1, A])(f: E1 => F[E2, A]): F[E2, A]
 
@@ -26,6 +24,8 @@ import scala.util.{Failure, Success, Try}
 }
 
 object BiFunctorMonadError {
+
+  def apply[F[+_, +_] : BiFunctorMonadError]: BiFunctorMonadError[F] = implicitly[BiFunctorMonadError[F]]
 
   def fromEither[F[+_, +_] : BiFunctorMonad, E, A](either: Either[E, A]): F[E, A] = either match {
     case Left(e)  => BiFunctorMonad[F].leftPure(e)

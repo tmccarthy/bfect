@@ -21,6 +21,4 @@ apply plugin: au.id.tmm.buildsrc.MyReleasePlugin
 
 dependencies {
     compile project(':core')
-
-    compile "com.github.mpilquist:simulacrum${s}:0.16.0"
 }

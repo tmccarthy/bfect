@@ -1,8 +1,6 @@
 package au.id.tmm.bifunctorio.typeclasses
 
-import simulacrum.typeclass
-
-@typeclass trait BiFunctorMonad[F[+_, +_]] extends BiFunctor[F] {
+trait BiFunctorMonad[F[+_, +_]] extends BiFunctor[F] {
 
   def rightPure[A](a: A): F[Nothing, A]
 
@@ -17,4 +15,8 @@ import simulacrum.typeclass
     */
   def tailRecM[E, A, A1](a: A)(f: A => F[E, Either[A, A1]]): F[E, A1]
 
+}
+
+object BiFunctorMonad {
+  def apply[F[+_, +_] : BiFunctorMonad]: BiFunctorMonad[F] = implicitly[BiFunctorMonad[F]]
 }
