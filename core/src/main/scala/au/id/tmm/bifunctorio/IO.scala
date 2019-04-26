@@ -30,8 +30,9 @@ sealed trait IO[+E, +A] {
     IO.FoldM(this, leftF, rightF)
 
   def flatMap[E2 >: E, A2](f: A => IO[E2, A2]): IO[E2, A2] = this match {
-    case self: IO.Fail[E] => self
-    case self: IO[E, A]   => IO.FlatMap(self, f)
+    case IO.FlatMap(io, f2) => IO.FlatMap(io, f2.andThen(_.flatMap(f)))
+    case self: IO.Fail[E]   => self
+    case self: IO[E, A]     => IO.FlatMap(self, f)
   }
 
   def flatten[E2 >: E, A1](implicit e: A <:< IO[E2, A1]): IO[E2, A1] = flatMap(io => io)
