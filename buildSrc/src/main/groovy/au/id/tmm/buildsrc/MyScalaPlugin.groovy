@@ -13,6 +13,8 @@ class MyScalaPlugin implements Plugin<Project> {
 
         def s = target.ext.s
 
+        def zincVersion = target.ext.zincVersion
+
         def scalaVersion = target.ext.scalaVersion
         def scalaTestVersion = target.ext.scalaTestVersion
 
@@ -33,7 +35,11 @@ class MyScalaPlugin implements Plugin<Project> {
             scalaCompilerPlugin
         }
 
+        target.configurations.scalaCompilerPlugin.transitive = false
+
         target.dependencies {
+            zinc "com.typesafe.zinc:zinc:$zincVersion"
+
             compile "org.scala-lang:scala-library:$scalaVersion"
 
             testCompile "org.scalatest:scalatest${s}:$scalaTestVersion"
@@ -44,6 +50,7 @@ class MyScalaPlugin implements Plugin<Project> {
 
             scalaCompilerPlugin "org.scalamacros:paradise_$scalaVersion:2.1.1"
             scalaCompilerPlugin "org.spire-math:kind-projector${s}:0.9.7"
+            scalaCompilerPlugin "org.scala-lang:scala-reflect:$scalaVersion"
         }
 
         target.tasks.withType(ScalaCompile) {
@@ -55,6 +62,7 @@ class MyScalaPlugin implements Plugin<Project> {
                         '-feature',                          // Emit warning and location for usages of features that should be imported explicitly.
                         '-language:existentials',            // Existential types (besides wildcard types) can be written and inferred
                         '-language:higherKinds',             // Allow higher-kinded types
+                        '-language:implicitConversions',     // Allow implicit conversions
                         '-unchecked',                        // Enable additional warnings where generated code depends on assumptions.
                         '-Xcheckinit',                       // Wrap field accessors to throw an exception on uninitialized access.
                         '-Xfatal-warnings',                  // Fail the compilation if there are any warnings.
@@ -84,7 +92,7 @@ class MyScalaPlugin implements Plugin<Project> {
                         '-Ywarn-unused:locals',              // Warn if a local definition is unused.
                         '-Ywarn-unused:privates',            // Warn if a private member is unused.
 
-                        "-Xplugin:" + target.configurations.scalaCompilerPlugin.asPath
+                        "-Xplugin:" + target.configurations.scalaCompilerPlugin.asPath,
                 ]
             }
         }
