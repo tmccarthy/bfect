@@ -37,26 +37,6 @@ class IORuntimeSpec extends ImprovedFlatSpec {
     assert(runtime.run(io) === Left(Failure.Unchecked(exception)))
   }
 
-  it can "run a sync action that throws an expected exception" in {
-    val exception = new RuntimeException
-
-    val io = IO.syncException {
-      throw exception
-    }
-
-    assert(runtime.run(io) === Left(Failure.Checked(exception)))
-  }
-
-  it can "run a sync action that throws an expected exception subtype" in {
-    val exception = new RuntimeException
-
-    val io = IO.syncCatch(throw exception) {
-      case e: RuntimeException => e
-    }
-
-    assert(runtime.run(io) === Left(Failure.Checked(exception)))
-  }
-
   it can "run a fold action that changes the error type" in {
     val io = IO.leftPure("Error")
       .leftMap(s => s"Error: $s")

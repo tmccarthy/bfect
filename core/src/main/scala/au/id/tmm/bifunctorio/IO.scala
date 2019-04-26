@@ -47,16 +47,6 @@ object IO {
 
   def sync[A](block: => A): IO[Nothing, A] = Effect(() => block)
 
-  def syncException[A](block: => A): IO[Exception, A] = syncCatch(block) {
-    case e: Exception => e
-  }
-
-  def syncCatch[E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): IO[E, A] = Effect { () =>
-    try {
-      Pure(block)
-    } catch catchPf.andThen(leftPure)
-  }.flatten
-
   final case class Pure[A](a: A) extends IO[Nothing, A]
   final case class Fail[E](cause: Failure[E]) extends IO[E, Nothing]
   final case class FlatMap[E, A, A2](io: IO[E, A], f: A => IO[E, A2]) extends IO[E, A2]
