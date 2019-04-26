@@ -1,6 +1,7 @@
-package au.id.tmm.bifunctorio.instances
+package au.id.tmm.bifunctorio.instances.effects
 
 import au.id.tmm.bifunctorio.IO
+import au.id.tmm.bifunctorio.instances.BMEInstance
 import au.id.tmm.bifunctorio.typeclasses.effects.Sync
 
 class SyncInstance private[instances]() extends BMEInstance with Sync[IO] {
