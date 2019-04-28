@@ -33,9 +33,19 @@ class IORuntime private () {
       case Left(failure) => run(leftF.asInstanceOf[Any => IO[E, A]](failure))
     }
 
-    case Effect(block)                =>
+    case Effect(block) =>
       try Right(block()) catch {
         case t: Throwable => Left(Failure.Unchecked(t))
+      }
+
+    case Ensure(io, finalizer) =>
+      try {
+        nonTailRecRun(io)
+      } finally {
+        nonTailRecRun(finalizer) match {
+          case Right(_) => ()
+          case Left(failure) => return Left(failure)
+        }
       }
   }
 

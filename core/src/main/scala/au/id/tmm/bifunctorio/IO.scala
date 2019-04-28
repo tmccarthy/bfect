@@ -37,20 +37,35 @@ sealed trait IO[+E, +A] {
 
   def flatten[E2 >: E, A1](implicit e: A <:< IO[E2, A1]): IO[E2, A1] = flatMap(io => io)
 
+  def ensure(finalizer: IO[Nothing, _]): IO[E, A] =
+    this match {
+      case IO.Ensure(io, finalizer1) => IO.Ensure(io, finalizer1.flatMap(_ => finalizer))
+      case self                      => IO.Ensure(self, finalizer)
+    }
+
 }
 
 object IO {
 
   def pure[A](a: A): IO[Nothing, A] = Pure(a)
 
+  val unit: IO[Nothing, Unit] = pure(Unit)
+
   def leftPure[E](e: E): IO[E, Nothing] = Fail(Failure.Checked(e))
 
   def sync[A](block: => A): IO[Nothing, A] = Effect(() => block)
+
+  def bracket[E1, E2 >: E1, A1, A2, R](acquire: IO[E2, R])(release: R => IO[Nothing, _])(use: R => IO[E2, A2]): IO[E2, A2] =
+    for {
+      resource <- acquire
+      result <- use(resource).ensure(release(resource))
+    } yield result
 
   final case class Pure[A](a: A) extends IO[Nothing, A]
   final case class Fail[E](cause: Failure[E]) extends IO[E, Nothing]
   final case class FlatMap[E, A, A2](io: IO[E, A], f: A => IO[E, A2]) extends IO[E, A2]
   final case class FoldM[E, E2, A, A2](io: IO[E, A], leftF: Failure[E] => IO[E2, A2], rightF: A => IO[E2, A2]) extends IO[E2, A2]
   final case class Effect[A](block: () => A) extends IO[Nothing, A]
+  final case class Ensure[E, A](io: IO[E, A], finalizer: IO[Nothing, _]) extends IO[E, A]
 
 }
