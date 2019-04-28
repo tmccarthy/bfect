@@ -1,5 +1,6 @@
 package au.id.tmm.bifunctorio
 
+import au.id.tmm.bifunctorio.ExitCase.{Failed, Succeeded}
 import au.id.tmm.utilities.testing.ImprovedFlatSpec
 
 class FlatMapRuntimeSpec extends ImprovedFlatSpec {
@@ -10,14 +11,14 @@ class FlatMapRuntimeSpec extends ImprovedFlatSpec {
     val io = IO.pure("hello")
       .flatMap(s => IO.pure(s.length))
 
-    assert(runtime.run(io) === Right(5))
+    assert(runtime.run(io) === Succeeded(5))
   }
 
   it can "run a pure flatMapped to a failure" in {
     val io = IO.pure("hello")
       .flatMap(s => IO.leftPure(GenericError))
 
-    assert(runtime.run(io) === Left(Failure.Checked(GenericError)))
+    assert(runtime.run(io) === Failed(Failure.Checked(GenericError)))
   }
 
 }

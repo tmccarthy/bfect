@@ -1,5 +1,7 @@
 package au.id.tmm.bifunctorio
 
+import au.id.tmm.bifunctorio.ExitCase._
+import au.id.tmm.bifunctorio.Failure.{Checked, Unchecked}
 import au.id.tmm.bifunctorio.IO._
 
 import scala.annotation.tailrec
@@ -7,16 +9,16 @@ import scala.annotation.tailrec
 class IORuntime private () {
 
   @tailrec
-  final def run[E, A](io: IO[E, A]): Either[Failure[E], A] = io match {
-    case Pure(a)                      => Right(a)
-    case Fail(failure)                => Left(failure)
+  final def run[E, A](io: IO[E, A]): ExitCase[E, A] = io match {
+    case Pure(a)                      => Succeeded(a)
+    case Fail(failure)                => Failed(failure)
 
     case FlatMap(Pure(a), f)       => run(f.asInstanceOf[Any => IO[E, A]](a))
-    case FlatMap(Fail(failure), _) => Left(failure)
+    case FlatMap(Fail(failure), _) => Failed(failure)
     case FlatMap(FlatMap(baseIO, f1), f2) => run(baseIO.flatMap((a: Any) => FlatMap(f2.asInstanceOf[Any => IO[E, A]](a), f1)).asInstanceOf[IO[E, A]])
     case FlatMap(baseIO, f)           => nonTailRecRun(baseIO) match {
-      case Right(a)      => run(f.asInstanceOf[Any => IO[E, A]](a))
-      case Left(failure) => Left(failure)
+      case Succeeded(a)      => run(f.asInstanceOf[Any => IO[E, A]](a))
+      case Failed(failure)   => Failed(failure)
     }
 
     case FoldM(Pure(a), leftF, rightF)       => run(rightF.asInstanceOf[Any => IO[E, A]](a))
@@ -29,27 +31,31 @@ class IORuntime private () {
         ).asInstanceOf[IO[E, A]],
       )
     case FoldM(baseIO, leftF, rightF)        => nonTailRecRun(baseIO) match {
-      case Right(a) => run(rightF.asInstanceOf[Any => IO[E, A]](a))
-      case Left(failure) => run(leftF.asInstanceOf[Any => IO[E, A]](failure))
+      case Succeeded(a)    => run(rightF.asInstanceOf[Any => IO[E, A]](a))
+      case Failed(failure) => run(leftF.asInstanceOf[Any => IO[E, A]](failure))
     }
 
     case Effect(block) =>
-      try Right(block()) catch {
-        case t: Throwable => Left(Failure.Unchecked(t))
+      try Succeeded(block()) catch {
+        case t: Throwable => Failed(Failure.Unchecked(t))
       }
 
-    case Ensure(io, finalizer) =>
-      try {
+    case Ensure(io, finalizer) => {
+      val result: ExitCase[E, A] = try {
         nonTailRecRun(io)
-      } finally {
-        nonTailRecRun(finalizer) match {
-          case Right(_) => ()
-          case Left(failure) => return Left(failure)
-        }
+      } catch {
+        case t: Throwable => Failed(Unchecked(t))
       }
+
+      nonTailRecRun(finalizer.asInstanceOf[Any => IO[Nothing, _]](result)) match {
+        case Succeeded(_)    => result
+        case Failed(Checked(e)) => Failed(Unchecked(e)) // This is impossible
+        case Failed(Unchecked(t)) => Failed(Unchecked(t))
+      }
+    }
   }
 
-  private def nonTailRecRun[E, A](io: IO[E, A]): Either[Failure[E], A] = run(io)
+  private def nonTailRecRun[E, A](io: IO[E, A]): ExitCase[E, A] = run(io)
 
 }
 

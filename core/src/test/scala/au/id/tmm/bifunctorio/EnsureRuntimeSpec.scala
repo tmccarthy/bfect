@@ -1,5 +1,6 @@
 package au.id.tmm.bifunctorio
 
+import au.id.tmm.bifunctorio.ExitCase.{Failed, Succeeded}
 import au.id.tmm.utilities.testing.ImprovedFlatSpec
 
 class EnsureRuntimeSpec extends ImprovedFlatSpec {
@@ -52,7 +53,7 @@ class EnsureRuntimeSpec extends ImprovedFlatSpec {
 
     val result = runtime.run(io)
 
-    assert(result === Right(()))
+    assert(result === Succeeded(()))
 
     assert(resourceAcquired)
     assert(resourceReleased)
@@ -71,7 +72,7 @@ class EnsureRuntimeSpec extends ImprovedFlatSpec {
 
     val result = runtime.run(io)
 
-    assert(result === Left(Failure.Checked(GenericError)))
+    assert(result === Failed(Failure.Checked(GenericError)))
 
     assert(!resourceReleased)
   }
@@ -91,7 +92,7 @@ class EnsureRuntimeSpec extends ImprovedFlatSpec {
 
     val result = runtime.run(io)
 
-    assert(result === Left(Failure.Unchecked(exception)))
+    assert(result === Failed(Failure.Unchecked(exception)))
 
     assert(!resourceReleased)
   }
@@ -110,7 +111,7 @@ class EnsureRuntimeSpec extends ImprovedFlatSpec {
 
     val result = runtime.run(io)
 
-    assert(result === Left(Failure.Checked(GenericError)))
+    assert(result === Failed(Failure.Checked(GenericError)))
 
     assert(resourceAcquired)
     assert(resourceReleased)
@@ -132,7 +133,7 @@ class EnsureRuntimeSpec extends ImprovedFlatSpec {
 
     val result = runtime.run(io)
 
-    assert(result === Left(Failure.Unchecked(exception)))
+    assert(result === Failed(Failure.Unchecked(exception)))
 
     assert(resourceAcquired)
     assert(resourceReleased)
@@ -153,7 +154,7 @@ class EnsureRuntimeSpec extends ImprovedFlatSpec {
 
     val result = runtime.run(io)
 
-    assert(result === Left(Failure.Unchecked(exception)))
+    assert(result === Failed(Failure.Unchecked(exception)))
 
     assert(resourceAcquired)
   }

@@ -1,8 +1,6 @@
 package au.id.tmm.bifunctorio.typeclasses.effects
 
-import au.id.tmm.bifunctorio.typeclasses.BME
-
-trait Sync[F[+_, +_]] extends BME[F] {
+trait Sync[F[+_, +_]] extends Bracket[F] {
 
   def suspend[E, A](effect: => F[E, A]): F[E, A]
 
