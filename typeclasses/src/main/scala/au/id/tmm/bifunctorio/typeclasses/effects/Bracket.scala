@@ -17,3 +17,7 @@ trait Bracket[F[+_, +_]] extends BME[F] {
     bracketCase[Unit, E, A](rightPure(()))({ case (resource, exitCase) => finalizer(exitCase) })(_ => fea)
 
 }
+
+object Bracket {
+  def apply[F[+_, +_] : Bracket]: Bracket[F] = implicitly[Bracket[F]]
+}
