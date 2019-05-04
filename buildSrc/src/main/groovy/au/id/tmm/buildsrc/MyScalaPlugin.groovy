@@ -87,6 +87,7 @@ class MyScalaPlugin implements Plugin<Project> {
                         '-Ywarn-unused:imports',             // Warn if an import selector is not referenced.
                         '-Ywarn-unused:locals',              // Warn if a local definition is unused.
                         '-Ywarn-unused:privates',            // Warn if a private member is unused.
+                        '-Ypatmat-exhaust-depth', '80',      // Increase max exhaustion depth
 
                         "-Xplugin:" + target.configurations.scalaCompilerPlugin.asPath,
                 ]
