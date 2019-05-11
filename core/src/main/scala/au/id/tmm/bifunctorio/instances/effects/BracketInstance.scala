@@ -1,8 +1,9 @@
 package au.id.tmm.bifunctorio.instances.effects
 
+import au.id.tmm.bifunctorio.IO
 import au.id.tmm.bifunctorio.instances.BMEInstance
+import au.id.tmm.bifunctorio.typeclasses.ExitCase
 import au.id.tmm.bifunctorio.typeclasses.effects.Bracket
-import au.id.tmm.bifunctorio.{ExitCase, IO}
 
 class BracketInstance private[instances]() extends BMEInstance with Bracket[IO] {
 

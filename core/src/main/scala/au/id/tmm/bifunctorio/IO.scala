@@ -1,5 +1,7 @@
 package au.id.tmm.bifunctorio
 
+import au.id.tmm.bifunctorio.typeclasses.{ExitCase, Failure}
+
 sealed trait IO[+E, +A] {
 
   def map[A2](f: A => A2): IO[E, A2] = this match {
@@ -46,6 +48,8 @@ sealed trait IO[+E, +A] {
       case self                      => IO.Ensure(self, finalizer)
     }
 
+  def fork: IO[Nothing, IOFibre[E, A]] = ???
+
 }
 
 object IO {
@@ -69,6 +73,10 @@ object IO {
       resource <- acquire
       result <- use(resource).ensureCase(exitCase => release(resource, exitCase))
     } yield result
+
+  def racePair[E, A, B](left: IO[E, A], right: IO[E, B]): IO[E, Either[(A, IOFibre[E, B]), (IOFibre[E, A], B)]] = ???
+
+
 
   final case class Pure[A](a: A) extends IO[Nothing, A]
   final case class Fail[E](cause: Failure[E]) extends IO[E, Nothing]

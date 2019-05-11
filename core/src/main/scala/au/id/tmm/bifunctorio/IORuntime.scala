@@ -1,8 +1,9 @@
 package au.id.tmm.bifunctorio
 
-import au.id.tmm.bifunctorio.ExitCase._
-import au.id.tmm.bifunctorio.Failure.{Checked, Unchecked}
 import au.id.tmm.bifunctorio.IO._
+import au.id.tmm.bifunctorio.typeclasses.ExitCase._
+import au.id.tmm.bifunctorio.typeclasses.Failure.{Checked, Unchecked}
+import au.id.tmm.bifunctorio.typeclasses.{ExitCase, Failure}
 
 import scala.annotation.tailrec
 

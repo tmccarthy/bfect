@@ -1,7 +1,6 @@
 package au.id.tmm.bifunctorio.typeclasses.effects
 
-import au.id.tmm.bifunctorio.ExitCase
-import au.id.tmm.bifunctorio.typeclasses.BME
+import au.id.tmm.bifunctorio.typeclasses.{BME, ExitCase}
 
 trait Bracket[F[+_, +_]] extends BME[F] {
 

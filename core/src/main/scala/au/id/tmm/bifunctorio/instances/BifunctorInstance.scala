@@ -1,9 +1,9 @@
 package au.id.tmm.bifunctorio.instances
 
 import au.id.tmm.bifunctorio.IO
-import au.id.tmm.bifunctorio.typeclasses.BiFunctor
+import au.id.tmm.bifunctorio.typeclasses.Bifunctor
 
-class BiFunctorInstance private[instances] () extends BiFunctor[IO] {
+class BifunctorInstance private[instances]() extends Bifunctor[IO] {
   override def biMap[L1, R1, L2, R2](f: IO[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): IO[L2, R2] =
     f.biMap(leftF, rightF)
 

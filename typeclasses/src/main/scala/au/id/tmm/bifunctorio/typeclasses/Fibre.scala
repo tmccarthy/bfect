@@ -1,6 +1,6 @@
 package au.id.tmm.bifunctorio.typeclasses
 
-trait Fibre[F[+_, +_], E, A] {
+trait Fibre[F[+_, +_], +E, +A] {
 
   def cancel: F[Nothing, Unit]
 

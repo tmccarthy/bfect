@@ -5,9 +5,9 @@ trait FirstPriorityIOInstances extends SecondPriorityIOInstances {
 }
 
 trait SecondPriorityIOInstances extends ThirdPriorityIOInstances {
-  implicit val biFunctorMonadInstance: BiFunctorMonadInstance = new BiFunctorMonadInstance()
+  implicit val biFunctorMonadInstance: BifunctorMonadInstance = new BifunctorMonadInstance()
 }
 
 trait ThirdPriorityIOInstances {
-  implicit val biFunctorInstance: BiFunctorInstance = new BiFunctorInstance()
+  implicit val biFunctorInstance: BifunctorInstance = new BifunctorInstance()
 }

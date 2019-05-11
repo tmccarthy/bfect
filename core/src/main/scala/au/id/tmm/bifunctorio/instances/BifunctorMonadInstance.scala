@@ -1,9 +1,9 @@
 package au.id.tmm.bifunctorio.instances
 
 import au.id.tmm.bifunctorio.IO
-import au.id.tmm.bifunctorio.typeclasses.BiFunctorMonad
+import au.id.tmm.bifunctorio.typeclasses.BifunctorMonad
 
-class BiFunctorMonadInstance private[instances] () extends BiFunctorInstance with BiFunctorMonad[IO] {
+class BifunctorMonadInstance private[instances]() extends BifunctorInstance with BifunctorMonad[IO] {
 
   override def rightPure[A](a: A): IO[Nothing, A] = IO.pure(a)
 

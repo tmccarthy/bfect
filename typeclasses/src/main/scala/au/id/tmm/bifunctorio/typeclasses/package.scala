@@ -2,7 +2,7 @@ package au.id.tmm.bifunctorio
 
 package object typeclasses {
 
-  type BME[F[+_, +_]] = BiFunctorMonadError[F]
-  val BME: BiFunctorMonadError.type = BiFunctorMonadError
+  type BME[F[+_, +_]] = BifunctorMonadError[F]
+  val BME: BifunctorMonadError.type = BifunctorMonadError
 
 }

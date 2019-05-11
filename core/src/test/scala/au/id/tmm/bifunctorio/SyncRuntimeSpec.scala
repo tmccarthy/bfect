@@ -1,6 +1,7 @@
 package au.id.tmm.bifunctorio
 
-import au.id.tmm.bifunctorio.ExitCase.Failed
+import au.id.tmm.bifunctorio.typeclasses.ExitCase.Failed
+import au.id.tmm.bifunctorio.typeclasses.Failure
 import au.id.tmm.utilities.testing.ImprovedFlatSpec
 
 class SyncRuntimeSpec extends ImprovedFlatSpec {

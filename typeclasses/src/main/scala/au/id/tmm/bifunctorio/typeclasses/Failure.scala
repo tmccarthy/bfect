@@ -1,4 +1,4 @@
-package au.id.tmm.bifunctorio
+package au.id.tmm.bifunctorio.typeclasses
 
 sealed trait Failure[+E]
 

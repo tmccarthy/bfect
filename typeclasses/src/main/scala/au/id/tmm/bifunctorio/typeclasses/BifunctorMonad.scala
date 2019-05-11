@@ -1,6 +1,6 @@
 package au.id.tmm.bifunctorio.typeclasses
 
-trait BiFunctorMonad[F[+_, +_]] extends BiFunctor[F] {
+trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
 
   def rightPure[A](a: A): F[Nothing, A]
 
@@ -17,6 +17,6 @@ trait BiFunctorMonad[F[+_, +_]] extends BiFunctor[F] {
 
 }
 
-object BiFunctorMonad {
-  def apply[F[+_, +_] : BiFunctorMonad]: BiFunctorMonad[F] = implicitly[BiFunctorMonad[F]]
+object BifunctorMonad {
+  def apply[F[+_, +_] : BifunctorMonad]: BifunctorMonad[F] = implicitly[BifunctorMonad[F]]
 }
