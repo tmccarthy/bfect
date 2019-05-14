@@ -37,6 +37,7 @@ private[catsinterop] object TmmToCatsTypeclassConversionsImpls {
       val releaseForTmmBracket: (A, ExitCase[Throwable, B]) => F[Nothing, _] = { case (resource, exitCase) =>
         val catsExitCase: cats.effect.ExitCase[Throwable] = exitCase match {
           case ExitCase.Succeeded(a)                 => cats.effect.ExitCase.Completed
+          case ExitCase.Failed(Failure.Interrupted)  => cats.effect.ExitCase.Canceled
           case ExitCase.Failed(Failure.Checked(e))   => cats.effect.ExitCase.Error(e)
           case ExitCase.Failed(Failure.Unchecked(t)) => cats.effect.ExitCase.Error(t)
         }

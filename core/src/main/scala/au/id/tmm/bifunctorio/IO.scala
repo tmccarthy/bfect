@@ -23,6 +23,7 @@ sealed trait IO[+E, +A] {
     foldCauseM(
       leftF = {
         case Failure.Checked(e)             => leftF(e)
+        case Failure.Interrupted            => IO.Fail(Failure.Interrupted)
         case cause @ Failure.Unchecked(_)   => IO.Fail(cause)
       },
       rightF,

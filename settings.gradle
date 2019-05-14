@@ -2,4 +2,6 @@ rootProject.name = 'bifunctor-io'
 
 include 'core',
     'typeclasses',
-    'catsInterop'
+    'interop:cats',
+    'interop:zio'
+

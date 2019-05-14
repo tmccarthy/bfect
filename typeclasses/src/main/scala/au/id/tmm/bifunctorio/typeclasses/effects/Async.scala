@@ -10,7 +10,7 @@ trait Async[F[+_, +_]] extends Sync[F] {
     }
   }
 
-  def asyncF[E, A](k: (Either[E, A] => Unit) => F[Nothing, Unit]): F[E, A]
+  def asyncF[E, A](k: (Either[E, A] => Unit) => F[Nothing, _]): F[E, A]
 
 }
 

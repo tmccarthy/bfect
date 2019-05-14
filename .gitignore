@@ -33,3 +33,6 @@ gradle-app.setting
 
 /*/build
 /*/out
+
+/interop/*/build
+/interop/*/out

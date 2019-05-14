@@ -2,7 +2,7 @@ package au.id.tmm.bifunctorio
 
 import au.id.tmm.bifunctorio.IO._
 import au.id.tmm.bifunctorio.typeclasses.ExitCase._
-import au.id.tmm.bifunctorio.typeclasses.Failure.{Checked, Unchecked}
+import au.id.tmm.bifunctorio.typeclasses.Failure.{Checked, Interrupted, Unchecked}
 import au.id.tmm.bifunctorio.typeclasses.{ExitCase, Failure}
 
 import scala.annotation.tailrec
@@ -51,6 +51,7 @@ class IORuntime private () {
       nonTailRecRun(finalizer.asInstanceOf[Any => IO[Nothing, _]](result)) match {
         case Succeeded(_)    => result
         case Failed(Checked(e)) => Failed(Unchecked(e)) // This is impossible
+        case Failed(Interrupted) => Failed(Interrupted)
         case Failed(Unchecked(t)) => Failed(Unchecked(t))
       }
     }

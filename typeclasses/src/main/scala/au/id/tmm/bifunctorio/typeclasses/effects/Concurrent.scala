@@ -16,7 +16,7 @@ trait Concurrent[F[+_, +_]] extends Async[F] {
     }
   /*_*/
 
-  def cancelable[E, A](k: (Either[E, A] => Unit) => F[Nothing, Unit]): F[E, A]
+  def cancelable[E, A](k: (Either[E, A] => Unit) => F[Nothing, _]): F[E, A]
 
 }
 
