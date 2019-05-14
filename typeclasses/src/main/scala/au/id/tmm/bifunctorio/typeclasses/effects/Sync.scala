@@ -24,6 +24,9 @@ trait Sync[F[+_, +_]] extends Bracket[F] {
       case t: Throwable => t
     }
 
+  def bracketCloseable[R <: AutoCloseable, E, A](acquire: F[E, R])(use: R => F[E, A]): F[E, A] =
+    bracket(acquire)(r => sync(r.close()))(use)
+
 }
 
 object Sync {
