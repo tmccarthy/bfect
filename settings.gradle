@@ -1,6 +1,6 @@
 rootProject.name = 'bfect'
 
-include 'core',
+include 'io',
     'typeclasses',
     'effects',
     'interop:cats',
