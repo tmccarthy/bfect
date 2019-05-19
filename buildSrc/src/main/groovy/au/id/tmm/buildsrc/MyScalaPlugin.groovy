@@ -133,6 +133,7 @@ class MyScalaPlugin implements Plugin<Project> {
 
         extension.header = target.rootProject.file('HEADER')
         extension.strictCheck = true
+        extension.exclude('*.gitkeep')
 
         target.tasks.withType(LicenseFormat.class).each { licenseFormatTask ->
             def sourceSetName = licenseFormatTask.name.drop("${LicenseBasePlugin.FORMAT_TASK_BASE_NAME}".length()).uncapitalize()
