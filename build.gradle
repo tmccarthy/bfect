@@ -3,10 +3,10 @@ apply plugin: au.id.tmm.buildsrc.MyVersionPlugin
 apply plugin: 'idea'
 
 allprojects {
-  group = 'au.id.tmm.bfect'
+  group = "au.id.tmm.$rootProject.name"
 }
 
-description = 'Bifunctor effect typeclasses'
+description = 'Bifunctor IO typeclasses and interop'
 
 repositories {
   mavenCentral()

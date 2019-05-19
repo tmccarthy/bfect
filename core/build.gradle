@@ -1,6 +1,6 @@
 apply plugin: au.id.tmm.buildsrc.MyScalaPlugin
 
-description = 'Effects for a Bifunctor IO I decided to write'
+description = 'Bifunctor IO effect typeclasses'
 
 extensions.add('myRelease', new au.id.tmm.buildsrc.MyReleasePlugin.MyReleasePluginExtension())
 
@@ -20,7 +20,4 @@ apply plugin: 'signing'
 apply plugin: au.id.tmm.buildsrc.MyReleasePlugin
 
 dependencies {
-    compile project(':typeclasses')
-
-    compile 'commons-io:commons-io:2.6'
 }
