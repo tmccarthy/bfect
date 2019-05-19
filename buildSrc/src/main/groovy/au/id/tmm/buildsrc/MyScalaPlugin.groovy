@@ -136,9 +136,14 @@ class MyScalaPlugin implements Plugin<Project> {
 
         target.tasks.withType(LicenseFormat.class).each { licenseFormatTask ->
             def sourceSetName = licenseFormatTask.name.drop("${LicenseBasePlugin.FORMAT_TASK_BASE_NAME}".length()).uncapitalize()
-            def compileTaskName = "compile${sourceSetName.capitalize()}"
-            def compileTask = target.tasks.findByName(compileTaskName)
-            compileTask?.dependsOn(licenseFormatTask)
+
+            if (sourceSetName == 'main') {
+                target.tasks.getByName('compileScala').dependsOn(licenseFormatTask)
+            } else if (sourceSetName == 'test') {
+                target.tasks.getByName('compileTestScala').dependsOn(licenseFormatTask)
+            } else {
+                target.tasks.findByName("compile${sourceSetName.capitalize()}Scala")?.dependsOn(licenseFormatTask)
+            }
         }
     }
 }
