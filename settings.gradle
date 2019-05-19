@@ -1,13 +1,13 @@
 rootProject.name = 'bfect'
 
 include 'core',
-    'effects',
+    'extra-effects',
     'interop:cats',
     'interop:zio',
     'io'
 
 project(':core').name = 'bfect-core'
-project(':effects').name = 'bfect-extra-effects'
+project(':extra-effects').name = 'bfect-extra-effects'
 project(':interop:cats').name = 'bfect-interop-cats'
 project(':interop:zio').name = 'bfect-interop-zio'
 project(':io').name = 'bfect-io'
