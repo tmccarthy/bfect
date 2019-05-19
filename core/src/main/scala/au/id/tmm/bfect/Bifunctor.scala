@@ -29,4 +29,8 @@ trait Bifunctor[F[_, _]] {
 
 object Bifunctor {
   def apply[F[_, _] : Bifunctor]: Bifunctor[F] = implicitly[Bifunctor[F]]
+
+  implicit class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {
+    def map[R2](f: R => R2): F[L, R2] = bifunctor.map(flr)(f)
+  }
 }

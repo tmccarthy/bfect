@@ -15,9 +15,9 @@
  */
 package au.id.tmm.bfect
 
-import scala.util.Try
-
 trait BifunctorMonadError[F[+_, +_]] extends BifunctorMonad[F] {
+
+  def raiseError[E](e: E): F[E, Nothing] = leftPure(e)
 
   def handleErrorWith[E1, A, E2](fea: F[E1, A])(f: E1 => F[E2, A]): F[E2, A]
 
@@ -29,6 +29,9 @@ trait BifunctorMonadError[F[+_, +_]] extends BifunctorMonad[F] {
     handleErrorWith(fea)(totalHandler)
   }
 
+  def catchLeft[E1, A, E2 >: E1](fea: F[E1, A])(catchPf: PartialFunction[E1, F[E2, A]]): F[E2, A] =
+    recoverWith[E1, A, E2](fea)(catchPf)
+
   def attempt[E, A](fea: F[E, A]): F[Nothing, Either[E, A]] =
     handleErrorWith {
       rightMap(fea)(a => Right(a): Either[E, A])
@@ -36,22 +39,27 @@ trait BifunctorMonadError[F[+_, +_]] extends BifunctorMonad[F] {
       rightPure(Left(e): Either[E, A])
     }
 
+  def absolve[E, A](fEitherEA: F[Nothing, Either[E, A]]): F[E, A] = flatMap(fEitherEA)(BME.fromEither(_)(this))
+
 }
 
-object BifunctorMonadError {
+object BifunctorMonadError extends BifunctorMonadStaticOps {
 
   def apply[F[+_, +_] : BifunctorMonadError]: BifunctorMonadError[F] = implicitly[BifunctorMonadError[F]]
 
-  def fromEither[F[+_, +_] : BifunctorMonad, E, A](either: Either[E, A]): F[E, A] = either match {
-    case Left(e)  => BifunctorMonad[F].leftPure(e)
-    case Right(a) => BifunctorMonad[F].rightPure(a)
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bme: BME[F]) extends BifunctorMonad.Ops[F, E, A](fea) {
+    def attempt: F[Nothing, Either[E, A]] = bme.attempt(fea)
+    def handleErrorWith[E2 >: E](f: E => F[E2, A]): F[E2, A] = bme.handleErrorWith[E, A, E2](fea)(f)
+    def recoverWith[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A] = bme.recoverWith[E, A, E2](fea)(catchPf)
+    def catchLeft[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A] = bme.catchLeft[E, A, E2](fea)(catchPf)
   }
 
-  def fromTry[F[+_, +_] : BifunctorMonad, A](aTry: Try[A]): F[Throwable, A] = aTry match {
-    case scala.util.Success(a) => BifunctorMonad[F].rightPure(a)
-    case scala.util.Failure(e) => BifunctorMonad[F].leftPure(e)
+  implicit class AbsolveOps[F[+_, +_], E, A](fEitherEA: F[Nothing, Either[E, A]])(implicit bme: BME[F]) {
+    def absolve: F[E, A] = bme.absolve(fEitherEA)
   }
 
-  def unit[F[+_, +_] : BifunctorMonad]: F[Nothing, Unit] = BifunctorMonad[F].rightPure(())
+}
 
+trait BifunctorMonadErrorStaticOps extends BifunctorMonadStaticOps {
+  def raiseError[F[+_, +_] : BME, E](e: E): F[E, Nothing] = BME[F].raiseError(e)
 }
