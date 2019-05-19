@@ -21,7 +21,7 @@ object Resources {
 
         import syncInstance._
 
-        bracketCloseable(sync(Option(getClass.getResourceAsStream(resourceName)))) { maybeInputStream =>
+        bracket(sync(Option(Resources.getClass.getResourceAsStream(resourceName))))(is => sync(is.foreach(_.close()))) { maybeInputStream =>
           syncCatch {
             maybeInputStream.map(IOUtils.toString(_, charset))
           } {

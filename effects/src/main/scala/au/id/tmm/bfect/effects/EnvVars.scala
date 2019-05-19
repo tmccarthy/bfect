@@ -18,7 +18,8 @@ object EnvVars {
     BifunctorMonad[F].map(envVars)(_.get(key))
 
   def envVarOrError[F[+_, +_] : EnvVars : BifunctorMonad, E](key: String, onMissing: => E): F[E, String] =
-    BifunctorMonad[F].flatMap(envVars)(_.get(key).fold(BifunctorMonad[F].leftPure(onMissing))(BifunctorMonad[F].rightPure(_)))
+    BifunctorMonad[F].flatMap(envVars)(_.get(key)
+      .fold[F[E, String]](BifunctorMonad[F].leftPure(onMissing))(BifunctorMonad[F].rightPure(_)))
 
   trait SyncInstance {
     implicit def envVarsSyncInstance[F[+_, +_] : Sync]: EnvVars[F] = new EnvVars[F] {

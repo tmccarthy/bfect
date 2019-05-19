@@ -24,3 +24,8 @@ dependencies {
 
     compile "org.typelevel:cats-effect${s}:1.3.0"
 }
+
+// Ignored because the scaladoc task doesn't play nicely with kind projector
+tasks.scaladoc {
+    exclude '*'
+}
