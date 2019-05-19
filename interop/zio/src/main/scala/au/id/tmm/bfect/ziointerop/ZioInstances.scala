@@ -47,14 +47,14 @@ private[ziointerop] object ZioInstanceImpls {
 
   class ZioBracket extends ZioBME with Bracket[IO] {
 
-    private def tmmExitCaseFrom[E, A](zioExit: zio.Exit[E, A]): ExitCase[E, A] = zioExit match {
+    private def bfectExitCaseFrom[E, A](zioExit: zio.Exit[E, A]): ExitCase[E, A] = zioExit match {
       case Exit.Success(value) => ExitCase.Succeeded(value)
-      case Exit.Failure(cause) => ExitCase.Failed(DataConversions.zioCauseToTmmFailure(cause))
+      case Exit.Failure(cause) => ExitCase.Failed(DataConversions.zioCauseToBfectFailure(cause))
     }
 
     override def bracketCase[R, E, A](acquire: IO[E, R])(release: (R, ExitCase[E, A]) => IO[Nothing, _])(use: R => IO[E, A]): IO[E, A] = {
       val releaseForZioBracket: (R, zio.Exit[E, A]) => IO[Nothing, _] = { case (resource, zioExit) =>
-        release(resource, tmmExitCaseFrom(zioExit))
+        release(resource, bfectExitCaseFrom(zioExit))
       }
 
       IO.bracketExit[Any, E, R, A](acquire, releaseForZioBracket, use)
@@ -105,22 +105,22 @@ private[ziointerop] object ZioInstanceImpls {
   }
 
   class ZioConcurrent extends ZioAsync with Concurrent[IO] {
-    def tmmFibreFrom[E, A](zioFiber: Fiber[E, A]): Fibre[IO, E, A] = new Fibre[IO, E, A] {
+    def bfectFibreFrom[E, A](zioFiber: Fiber[E, A]): Fibre[IO, E, A] = new Fibre[IO, E, A] {
       override def cancel: IO[Nothing, Unit] = zioFiber.interrupt.unit
       override def join: IO[E, A] = zioFiber.join
     }
 
-    override def start[E, A](fea: IO[E, A]): IO[Nothing, Fibre[IO, E, A]] = fea.fork.map(tmmFibreFrom)
+    override def start[E, A](fea: IO[E, A]): IO[Nothing, Fibre[IO, E, A]] = fea.fork.map(bfectFibreFrom)
 
     override def racePair[E, A, B](left: IO[E, A], right: IO[E, B]): IO[E, Either[(A, Fibre[IO, E, B]), (Fibre[IO, E, A], B)]] = {
       left.raceWith(right)(
         leftDone = {
           case (Exit.Failure(cause),     rightFiber) => rightFiber.interrupt.zipRight(IO.halt(cause))
-          case (Exit.Success(leftValue), rightFiber) => rightPure(Left((leftValue, tmmFibreFrom(rightFiber))))
+          case (Exit.Success(leftValue), rightFiber) => rightPure(Left((leftValue, bfectFibreFrom(rightFiber))))
         },
         rightDone = {
           case (Exit.Failure(cause),      leftFiber) => leftFiber.interrupt.zipRight(IO.halt(cause))
-          case (Exit.Success(rightValue), leftFiber) => rightPure(Right((tmmFibreFrom(leftFiber), rightValue)))
+          case (Exit.Success(rightValue), leftFiber) => rightPure(Right((bfectFibreFrom(leftFiber), rightValue)))
         },
       )
     }

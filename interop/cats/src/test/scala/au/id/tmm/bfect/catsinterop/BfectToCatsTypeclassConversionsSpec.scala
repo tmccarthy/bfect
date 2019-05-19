@@ -17,7 +17,7 @@ package au.id.tmm.bfect.catsinterop
 
 import au.id.tmm.utilities.testing.ImprovedFlatSpec
 
-class TmmToCatsTypeclassConversionsSpec extends ImprovedFlatSpec {
+class BfectToCatsTypeclassConversionsSpec extends ImprovedFlatSpec {
 
   "the monad instance" should "be resolved without difficulty" in {
     import au.id.tmm.bfect.EitherInstances._
