@@ -5,7 +5,7 @@ import au.id.tmm.utilities.testing.ImprovedFlatSpec
 class TmmToCatsTypeclassConversionsSpec extends ImprovedFlatSpec {
 
   "the monad instance" should "be resolved without difficulty" in {
-    import au.id.tmm.bfect.typeclasses.EitherInstances._
+    import au.id.tmm.bfect.EitherInstances._
 
     cats.Monad[Either[Nothing, ?]]
 
@@ -13,7 +13,7 @@ class TmmToCatsTypeclassConversionsSpec extends ImprovedFlatSpec {
   }
 
   "the MonadError instance" should "be resolved without difficulty" in {
-    import au.id.tmm.bfect.typeclasses.EitherInstances._
+    import au.id.tmm.bfect.EitherInstances._
 
     cats.MonadError[Either[Nothing, ?], Nothing]
 

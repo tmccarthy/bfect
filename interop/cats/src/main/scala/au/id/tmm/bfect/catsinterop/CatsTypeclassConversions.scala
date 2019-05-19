@@ -1,7 +1,7 @@
 package au.id.tmm.bfect.catsinterop
 
-import au.id.tmm.bfect.typeclasses._
-import au.id.tmm.bfect.typeclasses.effects.{Async, Bracket, Concurrent, Sync}
+import au.id.tmm.bfect._
+import au.id.tmm.bfect.effects.{Async, Bracket, Concurrent, Sync}
 
 private[catsinterop] object TmmToCatsTypeclassConversionsImpls {
 

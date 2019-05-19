@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.typeclasses
+package au.id.tmm.bfect
 
 import scala.util.Try
 

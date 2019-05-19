@@ -1,7 +1,7 @@
 package au.id.tmm.bfect.io
 
-import au.id.tmm.bfect.typeclasses.ExitCase.{Failed, Succeeded}
-import au.id.tmm.bfect.typeclasses.Failure
+import au.id.tmm.bfect.ExitCase.{Failed, Succeeded}
+import au.id.tmm.bfect.Failure
 import au.id.tmm.utilities.testing.ImprovedFlatSpec
 
 class EnsureRuntimeSpec extends ImprovedFlatSpec {

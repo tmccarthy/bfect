@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.typeclasses.effects
+package au.id.tmm.bfect.effects
 
 import scala.util.Either
 

@@ -1,6 +1,6 @@
 package au.id.tmm.bfect.io
 
-import au.id.tmm.bfect.typeclasses.{ExitCase, Failure}
+import au.id.tmm.bfect.{ExitCase, Failure}
 
 sealed trait IO[+E, +A] {
 

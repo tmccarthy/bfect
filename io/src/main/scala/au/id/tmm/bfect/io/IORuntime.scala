@@ -1,9 +1,9 @@
 package au.id.tmm.bfect.io
 
 import au.id.tmm.bfect.io.IO._
-import au.id.tmm.bfect.typeclasses.ExitCase._
-import au.id.tmm.bfect.typeclasses.Failure.{Checked, Interrupted, Unchecked}
-import au.id.tmm.bfect.typeclasses.{ExitCase, Failure}
+import au.id.tmm.bfect.ExitCase._
+import au.id.tmm.bfect.Failure.{Checked, Interrupted, Unchecked}
+import au.id.tmm.bfect.{ExitCase, Failure}
 
 import scala.annotation.tailrec
 

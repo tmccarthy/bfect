@@ -1,7 +1,7 @@
 package au.id.tmm.bfect.io
 
-import au.id.tmm.bfect.typeclasses.ExitCase.Failed
-import au.id.tmm.bfect.typeclasses.Failure
+import au.id.tmm.bfect.ExitCase.Failed
+import au.id.tmm.bfect.Failure
 import au.id.tmm.utilities.testing.ImprovedFlatSpec
 
 class SyncRuntimeSpec extends ImprovedFlatSpec {

@@ -1,6 +1,7 @@
-package au.id.tmm.bfect.typeclasses.effects
+package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.typeclasses.{BME, ExitCase}
+import au.id.tmm.bfect.ExitCase
+import au.id.tmm.bfect.BME
 
 trait Bracket[F[+_, +_]] extends BME[F] {
 

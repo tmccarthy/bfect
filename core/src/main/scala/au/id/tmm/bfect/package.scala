@@ -1,6 +1,6 @@
-package au.id.tmm.bfect
+package au.id.tmm
 
-package object typeclasses {
+package object bfect {
 
   type BME[F[+_, +_]] = BifunctorMonadError[F]
   val BME: BifunctorMonadError.type = BifunctorMonadError

@@ -1,7 +1,6 @@
 package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.typeclasses.BifunctorMonad
-import au.id.tmm.bfect.typeclasses.effects.Sync
+import au.id.tmm.bfect.BifunctorMonad
 
 trait EnvVars[F[+_, +_]] {
   def envVars: F[Nothing, Map[String, String]]

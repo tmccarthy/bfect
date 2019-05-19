@@ -1,6 +1,6 @@
-package au.id.tmm.bfect.typeclasses.effects
+package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.typeclasses.Fibre
+import au.id.tmm.bfect.Fibre
 
 trait Concurrent[F[+_, +_]] extends Async[F] {
 

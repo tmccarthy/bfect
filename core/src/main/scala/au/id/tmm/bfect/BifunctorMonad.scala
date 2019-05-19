@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.typeclasses
+package au.id.tmm.bfect
 
 trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
 

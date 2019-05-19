@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.typeclasses
+package au.id.tmm.bfect
 
 trait Fibre[F[+_, +_], +E, +A] {
 

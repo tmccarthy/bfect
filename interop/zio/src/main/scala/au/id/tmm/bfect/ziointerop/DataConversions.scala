@@ -1,6 +1,6 @@
 package au.id.tmm.bfect.ziointerop
 
-import au.id.tmm.bfect.typeclasses.{Failure => TmmFailure}
+import au.id.tmm.bfect.{Failure => TmmFailure}
 import scalaz.zio
 import scalaz.zio.Exit.Cause
 

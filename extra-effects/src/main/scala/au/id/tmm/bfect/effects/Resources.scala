@@ -3,7 +3,6 @@ package au.id.tmm.bfect.effects
 import java.io.IOException
 import java.nio.charset.Charset
 
-import au.id.tmm.bfect.typeclasses.effects.Sync
 import org.apache.commons.io.IOUtils
 
 trait Resources[F[+_, +_]] {

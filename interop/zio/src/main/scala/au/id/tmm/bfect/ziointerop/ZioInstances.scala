@@ -1,7 +1,7 @@
 package au.id.tmm.bfect.ziointerop
 
-import au.id.tmm.bfect.typeclasses._
-import au.id.tmm.bfect.typeclasses.effects._
+import au.id.tmm.bfect._
+import au.id.tmm.bfect.effects._
 import scalaz.zio
 import scalaz.zio.{Exit, Fiber, IO}
 

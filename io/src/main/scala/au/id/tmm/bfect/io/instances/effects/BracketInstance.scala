@@ -2,8 +2,8 @@ package au.id.tmm.bfect.io.instances.effects
 
 import au.id.tmm.bfect.io.IO
 import au.id.tmm.bfect.io.instances.BMEInstance
-import au.id.tmm.bfect.typeclasses.ExitCase
-import au.id.tmm.bfect.typeclasses.effects.Bracket
+import au.id.tmm.bfect.ExitCase
+import au.id.tmm.bfect.effects.Bracket
 
 class BracketInstance private[instances]() extends BMEInstance with Bracket[IO] {
 
