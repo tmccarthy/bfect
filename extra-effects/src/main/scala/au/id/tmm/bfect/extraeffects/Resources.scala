@@ -1,8 +1,9 @@
-package au.id.tmm.bfect.effects
+package au.id.tmm.bfect.extraeffects
 
 import java.io.IOException
 import java.nio.charset.Charset
 
+import au.id.tmm.bfect.effects.Sync
 import org.apache.commons.io.IOUtils
 
 trait Resources[F[+_, +_]] {

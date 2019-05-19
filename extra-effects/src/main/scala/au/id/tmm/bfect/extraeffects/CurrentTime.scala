@@ -1,6 +1,8 @@
-package au.id.tmm.bfect.effects
+package au.id.tmm.bfect.extraeffects
 
 import java.time.{Instant, LocalDate, ZonedDateTime}
+
+import au.id.tmm.bfect.effects.Sync
 
 trait CurrentTime[F[+_, +_]] {
   def systemNanoTime: F[Nothing, Long]
