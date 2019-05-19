@@ -43,7 +43,7 @@ trait BifunctorMonadError[F[+_, +_]] extends BifunctorMonad[F] {
 
 }
 
-object BifunctorMonadError extends BifunctorMonadStaticOps {
+object BifunctorMonadError extends BifunctorMonadErrorStaticOps {
 
   def apply[F[+_, +_] : BifunctorMonadError]: BifunctorMonadError[F] = implicitly[BifunctorMonadError[F]]
 

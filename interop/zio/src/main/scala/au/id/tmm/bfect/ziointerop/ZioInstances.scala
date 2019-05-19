@@ -142,12 +142,12 @@ trait ZioInstances {
 
   import ZioInstanceImpls._
 
-  implicit def tmmBifunctorIsCatsBifunctor: Bifunctor[IO]       = new ZioBifunctor
-  implicit def tmmBifunctorMonadIsCatsMonad: BifunctorMonad[IO] = new ZioBifunctorMonad
-  implicit def tmmBifunctorMonadErrorIsCatsMonadError: BME[IO]  = new ZioBME
-  implicit def tmmBracketIsCatsBracket: Bracket[IO]             = new ZioBracket
-  implicit def tmmSyncIsCatsSync: Sync[IO]                      = new ZioSync
-  implicit def tmmAsyncIsCatsAsync: Async[IO]                   = new ZioAsync
-  implicit def tmmConcurrentIsCatsConcurrent: Concurrent[IO]    = new ZioConcurrent
+  implicit def zioBfectBifunctor: Bifunctor[IO]           = new ZioBifunctor
+  implicit def zioBfectBifunctorMonad: BifunctorMonad[IO] = new ZioBifunctorMonad
+  implicit def zioBfectBME: BME[IO]                       = new ZioBME
+  implicit def zioBfectBracket: Bracket[IO]               = new ZioBracket
+  implicit def zioBfectSync: Sync[IO]                     = new ZioSync
+  implicit def zioBfectAsync: Async[IO]                   = new ZioAsync
+  implicit def zioBfectConcurrent: Concurrent[IO]         = new ZioConcurrent
 
 }

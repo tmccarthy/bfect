@@ -133,7 +133,6 @@ class MyScalaPlugin implements Plugin<Project> {
         LicenseExtension extension = target.extensions.getByName('license') as LicenseExtension
 
         extension.header = target.rootProject.file('HEADER')
-        extension.strictCheck = true
         extension.exclude('*.gitkeep')
 
         target.tasks.withType(LicenseCheck.class).each { licenseCheckTask ->

@@ -115,13 +115,13 @@ trait TmmToCatsTypeclassConversions {
 
   import TmmToCatsTypeclassConversionsImpls._
 
-  implicit def tmmBifunctorIsCatsBifunctor[F[_, _] : Bifunctor]: cats.Bifunctor[F] = new CatsBifunctorForTmmBifunctor[F]()
-  implicit def tmmBifunctorMonadIsCatsMonad[F[+_, +_] : BifunctorMonad, E]: cats.Monad[F[E, +?]] = new CatsMonadForTmmBifunctorMonad[F, E]()
-  implicit def tmmBifunctorMonadErrorIsCatsMonadError[F[+_, +_] : BifunctorMonadError, E]: cats.MonadError[F[E, +?], E] = new CatsMonadErrorForTmmBME[F, E]()
-  implicit def tmmBracketIsCatsBracket[F[+_, +_] : Bracket]: cats.effect.Bracket[F[Throwable, +?], Throwable] = new CatsBracketForTmmBracket[F]()
-  implicit def tmmSyncIsCatsSync[F[+_, +_] : Sync]: cats.effect.Sync[F[Throwable, +?]] = new CatsSyncForTmmSync[F]()
-  implicit def tmmAsyncIsCatsAsync[F[+_, +_] : Async]: cats.effect.Async[F[Throwable, +?]] = new CatsAsyncForTmmAsync[F]()
-  implicit def tmmConcurrentIsCatsConcurrent[F[+_, +_] : Concurrent]: cats.effect.Concurrent[F[Throwable, +?]] = new CatsConcurrentForTmmConcurrent[F]()
+  implicit def bfectBifunctorIsCatsBifunctor[F[_, _] : Bifunctor]: cats.Bifunctor[F] = new CatsBifunctorForTmmBifunctor[F]()
+  implicit def bfectBifunctorMonadIsCatsMonad[F[+_, +_] : BifunctorMonad, E]: cats.Monad[F[E, +?]] = new CatsMonadForTmmBifunctorMonad[F, E]()
+  implicit def bfectBifunctorMonadErrorIsCatsMonadError[F[+_, +_] : BifunctorMonadError, E]: cats.MonadError[F[E, +?], E] = new CatsMonadErrorForTmmBME[F, E]()
+  implicit def bfectBracketIsCatsBracket[F[+_, +_] : Bracket]: cats.effect.Bracket[F[Throwable, +?], Throwable] = new CatsBracketForTmmBracket[F]()
+  implicit def bfectSyncIsCatsSync[F[+_, +_] : Sync]: cats.effect.Sync[F[Throwable, +?]] = new CatsSyncForTmmSync[F]()
+  implicit def bfectAsyncIsCatsAsync[F[+_, +_] : Async]: cats.effect.Async[F[Throwable, +?]] = new CatsAsyncForTmmAsync[F]()
+  implicit def bfectConcurrentIsCatsConcurrent[F[+_, +_] : Concurrent]: cats.effect.Concurrent[F[Throwable, +?]] = new CatsConcurrentForTmmConcurrent[F]()
 
 }
 
