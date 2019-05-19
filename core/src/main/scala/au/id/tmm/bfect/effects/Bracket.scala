@@ -15,8 +15,7 @@
  */
 package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.ExitCase
-import au.id.tmm.bfect.BME
+import au.id.tmm.bfect.{BME, BifunctorMonadStaticOps, ExitCase}
 
 trait Bracket[F[+_, +_]] extends BME[F] {
 
@@ -33,6 +32,11 @@ trait Bracket[F[+_, +_]] extends BME[F] {
 
 }
 
-object Bracket {
+object Bracket extends BracketStaticOps {
   def apply[F[+_, +_] : Bracket]: Bracket[F] = implicitly[Bracket[F]]
+
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) extends BME.Ops[F, E, A](fea)
+
 }
+
+trait BracketStaticOps extends BifunctorMonadStaticOps
