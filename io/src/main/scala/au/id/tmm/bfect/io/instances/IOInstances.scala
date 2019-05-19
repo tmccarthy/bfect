@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.instances
+package au.id.tmm.bfect.io.instances
 
 trait FirstPriorityIOInstances extends SecondPriorityIOInstances {
   implicit val bmeInstance: BMEInstance = new BMEInstance()

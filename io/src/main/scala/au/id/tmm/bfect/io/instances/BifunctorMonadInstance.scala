@@ -1,6 +1,6 @@
-package au.id.tmm.bfect.instances
+package au.id.tmm.bfect.io.instances
 
-import au.id.tmm.bfect.IO
+import au.id.tmm.bfect.io.IO
 import au.id.tmm.bfect.typeclasses.BifunctorMonad
 
 class BifunctorMonadInstance private[instances]() extends BifunctorInstance with BifunctorMonad[IO] {

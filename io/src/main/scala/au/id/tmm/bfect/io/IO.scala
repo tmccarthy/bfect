@@ -1,4 +1,4 @@
-package au.id.tmm.bfect
+package au.id.tmm.bfect.io
 
 import au.id.tmm.bfect.typeclasses.{ExitCase, Failure}
 
@@ -76,8 +76,6 @@ object IO {
     } yield result
 
   def racePair[E, A, B](left: IO[E, A], right: IO[E, B]): IO[E, Either[(A, IOFibre[E, B]), (IOFibre[E, A], B)]] = ???
-
-
 
   final case class Pure[A](a: A) extends IO[Nothing, A]
   final case class Fail[E](cause: Failure[E]) extends IO[E, Nothing]

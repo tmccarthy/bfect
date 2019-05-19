@@ -1,6 +1,6 @@
-package au.id.tmm.bfect
+package au.id.tmm.bfect.io
 
-import au.id.tmm.bfect.IO._
+import au.id.tmm.bfect.io.IO._
 import au.id.tmm.bfect.typeclasses.ExitCase._
 import au.id.tmm.bfect.typeclasses.Failure.{Checked, Interrupted, Unchecked}
 import au.id.tmm.bfect.typeclasses.{ExitCase, Failure}

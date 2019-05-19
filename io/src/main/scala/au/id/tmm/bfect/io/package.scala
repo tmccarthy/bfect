@@ -1,9 +1,7 @@
-package au.id.tmm
+package au.id.tmm.bfect
 
 import au.id.tmm.bfect.typeclasses.Fibre
 
-package object bfect {
-
+package object io {
   type IOFibre[+E, +A] = Fibre[IO, E, A]
-
 }

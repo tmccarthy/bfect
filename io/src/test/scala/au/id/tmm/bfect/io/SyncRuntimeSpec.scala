@@ -1,4 +1,4 @@
-package au.id.tmm.bfect
+package au.id.tmm.bfect.io
 
 import au.id.tmm.bfect.typeclasses.ExitCase.Failed
 import au.id.tmm.bfect.typeclasses.Failure
