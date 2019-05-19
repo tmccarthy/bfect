@@ -2,6 +2,7 @@ package au.id.tmm.buildsrc
 
 import com.github.maiflai.ScalaTestPlugin
 import com.hierynomus.gradle.license.LicenseBasePlugin
+import com.hierynomus.gradle.license.tasks.LicenseCheck
 import com.hierynomus.gradle.license.tasks.LicenseFormat
 import nl.javadude.gradle.plugins.license.LicenseExtension
 import org.gradle.api.Plugin
@@ -135,16 +136,20 @@ class MyScalaPlugin implements Plugin<Project> {
         extension.strictCheck = true
         extension.exclude('*.gitkeep')
 
-        target.tasks.withType(LicenseFormat.class).each { licenseFormatTask ->
-            def sourceSetName = licenseFormatTask.name.drop("${LicenseBasePlugin.FORMAT_TASK_BASE_NAME}".length()).uncapitalize()
+        target.tasks.withType(LicenseCheck.class).each { licenseCheckTask ->
+            def sourceSetName = licenseCheckTask.name.drop("${LicenseBasePlugin.FORMAT_TASK_BASE_NAME}".length()).uncapitalize()
 
             if (sourceSetName == 'main') {
-                target.tasks.getByName('compileScala').dependsOn(licenseFormatTask)
+                target.tasks.getByName('compileScala').dependsOn(licenseCheckTask)
             } else if (sourceSetName == 'test') {
-                target.tasks.getByName('compileTestScala').dependsOn(licenseFormatTask)
+                target.tasks.getByName('compileTestScala').dependsOn(licenseCheckTask)
             } else {
-                target.tasks.findByName("compile${sourceSetName.capitalize()}Scala")?.dependsOn(licenseFormatTask)
+                target.tasks.findByName("compile${sourceSetName.capitalize()}Scala")?.dependsOn(licenseCheckTask)
             }
         }
+
+        def updateLicensesTask = target.tasks.create(name: 'updateLicenses', group: 'verification')
+        target.tasks.withType(LicenseFormat.class).each { updateLicensesTask.dependsOn(it) }
+
     }
 }
