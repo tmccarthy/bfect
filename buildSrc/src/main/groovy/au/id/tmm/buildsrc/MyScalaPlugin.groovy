@@ -4,7 +4,10 @@ import com.github.maiflai.ScalaTestPlugin
 import com.hierynomus.gradle.license.LicenseBasePlugin
 import com.hierynomus.gradle.license.tasks.LicenseCheck
 import com.hierynomus.gradle.license.tasks.LicenseFormat
+import com.mycila.maven.plugin.license.header.HeaderDefinition
+import com.mycila.maven.plugin.license.header.HeaderType
 import nl.javadude.gradle.plugins.license.LicenseExtension
+import nl.javadude.gradle.plugins.license.header.HeaderDefinitionBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.scala.ScalaPlugin
@@ -134,6 +137,22 @@ class MyScalaPlugin implements Plugin<Project> {
 
         extension.header = target.rootProject.file('HEADER')
         extension.exclude('*.gitkeep')
+
+        def scalaHeaderDefinition = new HeaderDefinitionBuilder("scala")
+            .withFirstLine(HeaderType.JAVADOC_STYLE.definition.firstLine)
+            .withBeforeEachLine(HeaderType.JAVADOC_STYLE.definition.beforeEachLine)
+            .withAfterEachLine(HeaderType.JAVADOC_STYLE.definition.afterEachLine)
+            .withEndLine(HeaderType.JAVADOC_STYLE.definition.endLine)
+            .withNoBlankLines()
+            .withSkipLinePattern(HeaderType.JAVADOC_STYLE.definition.skipLinePattern.toString())
+            .withFirstLineDetectionDetectionPattern(HeaderType.JAVADOC_STYLE.definition.firstLineDetectionPattern.toString())
+            .withLastLineDetectionDetectionPattern(HeaderType.JAVADOC_STYLE.definition.lastLineDetectionPattern.toString())
+            .multiline()
+            .padLines()
+
+        extension.headerDefinition(scalaHeaderDefinition)
+
+        extension.mapping(".scala", "scala")
 
         target.tasks.withType(LicenseCheck.class).each { licenseCheckTask ->
             def sourceSetName = licenseCheckTask.name.drop("${LicenseBasePlugin.FORMAT_TASK_BASE_NAME}".length()).uncapitalize()
