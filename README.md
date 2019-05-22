@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/tmccarthy/bfect.svg?branch=master)](https://travis-ci.com/tmccarthy/bfect)
-![Maven Central](https://img.shields.io/maven-central/v/au.id.tmm.bfect/bfect-core_2.12.svg)
+[![Maven Central](https://img.shields.io/maven-central/v/au.id.tmm.bfect/bfect-core_2.12.svg)](https://repo.maven.apache.org/maven2/au/id/tmm/bfect/bfect-core_2.12/)
 
 # Bfect
 
