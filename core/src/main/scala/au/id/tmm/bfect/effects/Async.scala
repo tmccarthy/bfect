@@ -29,6 +29,15 @@ trait Async[F[+_, +_]] extends Sync[F] {
 
 }
 
-object Async {
+object Async extends AsyncStaticOps {
+
   def apply[F[+_, +_] : Async]: Async[F] = implicitly[Async[F]]
+
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit async: Async[F]) extends Sync.Ops[F, E, A](fea)
+
+}
+
+trait AsyncStaticOps extends SyncStaticOps {
+  def async[F[+_, +_] : Async, E, A](k: (Either[E, A] => Unit) => Unit): F[E, A] = Async[F].async(k)
+  def asyncF[F[+_, +_] : Async, E, A](k: (Either[E, A] => Unit) => F[Nothing, _]): F[E, A] = Async[F].asyncF(k)
 }

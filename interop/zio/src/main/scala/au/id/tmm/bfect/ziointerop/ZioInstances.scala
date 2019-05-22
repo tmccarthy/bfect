@@ -127,6 +127,8 @@ private[ziointerop] object ZioInstanceImpls {
 
     override def race[E, A, B](fea: IO[E, A], feb: IO[E, B]): IO[E, Either[A, B]] = fea.raceEither(feb)
 
+    override def par[E, A, B](fea: IO[E, A], feb: IO[E, B]): IO[E, (A, B)] = fea.zipPar(feb)
+
     override def cancelable[E, A](register: (Either[E, A] => Unit) => IO[Nothing, _]): IO[E, A] =
     //noinspection ScalaUnnecessaryParentheses
       IO.effectAsyncInterrupt { (cbForZio: IO[E, A] => Unit) =>
