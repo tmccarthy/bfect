@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/tmccarthy/bfect.svg?branch=master)](https://travis-ci.com/tmccarthy/bfect)
-![Sonatype Nexus (Releases)](https://img.shields.io/nexus/r/https/oss.sonatype.org/au.id.tmm.bfect/bfect-core.svg)
+![Maven Central](https://img.shields.io/maven-central/v/au.id.tmm.bfect/bfect-core_2.12.svg)
 
 # Bfect
 
