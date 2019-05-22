@@ -8,6 +8,10 @@ allprojects {
 
 description = 'Bifunctor IO typeclasses and interop'
 
+nexusStaging {
+    packageGroup = 'au.id.tmm'
+}
+
 repositories {
   mavenCentral()
 }
