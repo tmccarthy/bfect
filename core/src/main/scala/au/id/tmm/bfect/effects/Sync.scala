@@ -15,6 +15,8 @@
   */
 package au.id.tmm.bfect.effects
 
+import scala.util.control.NonFatal
+
 trait Sync[F[+_, +_]] extends Bracket[F] {
 
   def suspend[E, A](effect: => F[E, A]): F[E, A]
@@ -49,7 +51,7 @@ trait Sync[F[+_, +_]] extends Bracket[F] {
 
   def syncThrowable[A](block: => A): F[Throwable, A] =
     syncCatch(block) {
-      case t: Throwable => t
+      case NonFatal(t) => t
     }
 
   def bracketCloseable[R <: AutoCloseable, E, A](acquire: F[E, R])(use: R => F[E, A]): F[E, A] =
