@@ -41,6 +41,8 @@ trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
 
   def flatMap[E1, E2 >: E1, A, B](fe1a: F[E1, A])(fafe2b: A => F[E2, B]): F[E2, B]
 
+  def forever[E](fea: F[E, _]): F[E, Nothing] = flatMap(fea)(_ => forever(fea))
+
   /**
     * Keeps calling `f` until a `scala.util.Right[B]` is returned.
     */
@@ -53,6 +55,7 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
 
   implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F]) extends Bifunctor.Ops[F, E, A](fea)(bifunctorMonad) {
     def flatMap[E2 >: E, B](f: A => F[E2, B]): F[E2, B] = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
+    def forever: F[E, Nothing] = bifunctorMonad.forever(fea)
   }
 
   implicit class FlattenOps[F[+_, +_], E1, E2 >: E1, A](fefea: F[E1, F[E2, A]])(implicit bifunctorMonad: BifunctorMonad[F]) {

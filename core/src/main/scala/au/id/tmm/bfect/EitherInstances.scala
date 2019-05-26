@@ -17,9 +17,9 @@ package au.id.tmm.bfect
 
 import scala.annotation.tailrec
 
-private object EitherInstanceImpls {
+object EitherInstanceImpls {
 
-  class BifunctorInstance private[bfect] () extends Bifunctor[Either] {
+  class BifunctorInstance extends Bifunctor[Either] {
     override def biMap[L1, R1, L2, R2](f: Either[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): Either[L2, R2] =
       f.fold(leftF.andThen(Left.apply), rightF.andThen(Right.apply))
 
@@ -28,7 +28,7 @@ private object EitherInstanceImpls {
     override def leftMap[L1, R, L2](f: Either[L1, R])(leftF: L1 => L2): Either[L2, R] = f.left.map(leftF)
   }
 
-  class BifunctorMonadInstance private[bfect] () extends BifunctorInstance with BifunctorMonad[Either] {
+  class BifunctorMonadInstance extends BifunctorInstance with BifunctorMonad[Either] {
     override def rightPure[A](a: A): Either[Nothing, A] = Right(a)
 
     override def leftPure[E](e: E): Either[E, Nothing] = Left(e)
@@ -43,7 +43,7 @@ private object EitherInstanceImpls {
     }
   }
 
-  class BMEInstance private[bfect]() extends BifunctorMonadInstance with BifunctorMonadError[Either] {
+  class BMEInstance extends BifunctorMonadInstance with BifunctorMonadError[Either] {
     override def handleErrorWith[E1, A, E2](fea: Either[E1, A])(f: E1 => Either[E2, A]): Either[E2, A] = fea match {
       case Right(a) => Right(a)
       case Left(e) => f(e)

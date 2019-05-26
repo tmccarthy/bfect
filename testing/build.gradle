@@ -22,3 +22,8 @@ apply plugin: au.id.tmm.buildsrc.MyReleasePlugin
 dependencies {
     compile project(':bfect-core')
 }
+
+// Ignored because the scaladoc task doesn't play nicely with kind projector
+tasks.scaladoc {
+    exclude '*'
+}

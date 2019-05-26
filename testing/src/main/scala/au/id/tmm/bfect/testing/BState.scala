@@ -1,6 +1,23 @@
+/**
+  *    Copyright 2019 Timothy McCarthy
+  *
+  *    Licensed under the Apache License, Version 2.0 (the "License");
+  *    you may not use this file except in compliance with the License.
+  *    You may obtain a copy of the License at
+  *
+  *        http://www.apache.org/licenses/LICENSE-2.0
+  *
+  *    Unless required by applicable law or agreed to in writing, software
+  *    distributed under the License is distributed on an "AS IS" BASIS,
+  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *    See the License for the specific language governing permissions and
+  *    limitations under the License.
+  */
 package au.id.tmm.bfect.testing
 
-import au.id.tmm.bfect.effects.Concurrent
+import java.time.{Duration, Instant}
+
+import au.id.tmm.bfect.effects.{Concurrent, Timer}
 import au.id.tmm.bfect.{ExitCase, Failure, Fibre}
 
 import scala.util.Random
@@ -42,7 +59,7 @@ object BState {
 
   def leftPure[S, E](e: E): BState[S, E, Nothing] = BState(s => (s, Left(e)))
 
-  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]] = new Concurrent[BState[S, +?, +?]] {
+  trait ConcurrentInstance[S] extends Concurrent[BState[S, +?, +?]] {
 
     private def asFibre[E, A](fea: BState[S, E, A]): Fibre[BState[S, +?, +?], E, A] = new Fibre[BState[S, +?, +?], E, A] {
       override def cancel: BState[S, Nothing, Unit] = BState[S, Nothing, Unit](d => (d, Right(())))
@@ -65,8 +82,8 @@ object BState {
       var result: Option[Either[E, A]] = None
 
       k {
-        case r @ Right(a) => result = Some(r)
-        case l @ Left(e) => result = Some(l)
+        case r@Right(a) => result = Some(r)
+        case l@Left(e) => result = Some(l)
       }
 
       BState[S, Nothing, BState[S, E, A]] { state =>
@@ -125,6 +142,34 @@ object BState {
 
     override def biMap[L1, R1, L2, R2](f: BState[S, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): BState[S, L2, R2] =
       f.biMap(leftF, rightF)
+
+  }
+
+  // TODO remove if this gets incorporated into the above
+  trait TimerInstance[S] extends ConcurrentInstance[S] with Timer[BState[S, +?, +?]] {
+    def nowFromState(state: S): (S, Instant)
+
+    def applySleepToState(sleepDuration: Duration, state: S): S
+
+    override def sleep(duration: Duration): BState[S, Nothing, Unit] =
+      BState(state => (applySleepToState(duration, state), Right(())))
+
+    override def now: BState[S, Nothing, Instant] =
+      BState { state =>
+        nowFromState(state) match {
+          case (newState, instant) => (newState, Right(instant))
+        }
+      }
+  }
+
+  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]] = new ConcurrentInstance[S] {}
+
+  /**
+    * Provides an instance for `Timer` where `now` is always 1970-01-01T00:00:00Z, and sleep does not alter the state.
+    */
+  implicit def dummyTimerInstance[S]: Timer[BState[S, +?, +?]] = new TimerInstance[S] {
+    override def nowFromState(state: S): (S, Instant) = (state, Instant.EPOCH)
+    override def applySleepToState(sleepDuration: Duration, state: S): S = state
   }
 
 }
