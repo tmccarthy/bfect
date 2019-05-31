@@ -15,10 +15,17 @@
   */
 package au.id.tmm.bfect.ziointerop
 
+import java.time.{Duration, Instant}
+import java.util.concurrent.TimeUnit
+
 import au.id.tmm.bfect._
 import au.id.tmm.bfect.effects._
 import scalaz.zio
+import scalaz.zio.clock.Clock
+import scalaz.zio.duration.{Duration => ZioDuration}
 import scalaz.zio.{Exit, Fiber, IO}
+
+import scala.concurrent.duration.{Duration => ScalaDuration}
 
 private[ziointerop] object ZioInstanceImpls {
 
@@ -104,7 +111,15 @@ private[ziointerop] object ZioInstanceImpls {
     }
   }
 
-  class ZioConcurrent extends ZioAsync with Concurrent[IO] {
+  trait ZioTimer extends ZioBME with Timer[IO] {
+    private val clock = Clock.Live.clock
+
+    override def sleep(duration: Duration): IO[Nothing, Unit] = clock.sleep(ZioDuration.fromNanos(duration.toNanos))
+    override def sleep(scalaDuration: ScalaDuration): IO[Nothing, Unit] = clock.sleep(ZioDuration.fromScala(scalaDuration))
+    override def now: IO[Nothing, Instant] = clock.currentTime(TimeUnit.NANOSECONDS).map(nanos => Instant.ofEpochSecond(nanos / 1000000000, nanos))
+  }
+
+  class ZioConcurrent extends ZioAsync with ZioTimer with Concurrent[IO] {
     def bfectFibreFrom[E, A](zioFiber: Fiber[E, A]): Fibre[IO, E, A] = new Fibre[IO, E, A] {
       override def cancel: IO[Nothing, Unit] = zioFiber.interrupt.unit
       override def join: IO[E, A] = zioFiber.join

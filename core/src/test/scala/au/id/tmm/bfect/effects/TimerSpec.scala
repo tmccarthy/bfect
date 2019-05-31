@@ -18,13 +18,16 @@ package au.id.tmm.bfect.effects
 import java.time.{Duration, Instant}
 
 import au.id.tmm.bfect.effects.Timer.Ops
-import au.id.tmm.bfect.effects.TimerSpec.{TimerTestState, dummyTask}
+import au.id.tmm.bfect.effects.TimerSpec.{TimerTestIO, TimerTestState, dummyTask}
 import au.id.tmm.bfect.testing.BState
 import au.id.tmm.utilities.testing.ImprovedFlatSpec
 
 import scala.concurrent.duration.{Duration => ScalaDuration}
 
 class TimerSpec extends ImprovedFlatSpec {
+
+  // Need to bring this into scope to override the default implementation provided by the `Concurrent` instance
+  private implicit val timerInstance: Timer[TimerTestIO] = TimerSpec.timerInstanceForTests
 
   "repeating with a fixed delay" should "repeat with the same delay length if the task takes less than the duration" in {
     val task = dummyTask(Duration.ofSeconds(1), failsAfter = Instant.EPOCH.plusSeconds(10))

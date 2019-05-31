@@ -143,9 +143,21 @@ object BState {
     override def biMap[L1, R1, L2, R2](f: BState[S, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): BState[S, L2, R2] =
       f.biMap(leftF, rightF)
 
+    override def sleep(duration: Duration): BState[S, Nothing, Unit] =
+      BState(state => (applySleepToState(duration, state), Right(())))
+
+    override def now: BState[S, Nothing, Instant] =
+      BState { state =>
+        nowFromState(state) match {
+          case (newState, instant) => (newState, Right(instant))
+        }
+      }
+
+    def nowFromState(state: S): (S, Instant)
+
+    def applySleepToState(sleepDuration: Duration, state: S): S
   }
 
-  // TODO remove if this gets incorporated into the above
   trait TimerInstance[S] extends ConcurrentInstance[S] with Timer[BState[S, +?, +?]] {
     def nowFromState(state: S): (S, Instant)
 
@@ -162,12 +174,10 @@ object BState {
       }
   }
 
-  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]] = new ConcurrentInstance[S] {}
-
   /**
     * Provides an instance for `Timer` where `now` is always 1970-01-01T00:00:00Z, and sleep does not alter the state.
     */
-  implicit def dummyTimerInstance[S]: Timer[BState[S, +?, +?]] = new TimerInstance[S] {
+  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]] = new ConcurrentInstance[S] {
     override def nowFromState(state: S): (S, Instant) = (state, Instant.EPOCH)
     override def applySleepToState(sleepDuration: Duration, state: S): S = state
   }

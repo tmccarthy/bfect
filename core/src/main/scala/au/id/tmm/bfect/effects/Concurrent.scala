@@ -17,7 +17,7 @@ package au.id.tmm.bfect.effects
 
 import au.id.tmm.bfect.Fibre
 
-trait Concurrent[F[+_, +_]] extends Async[F] {
+trait Concurrent[F[+_, +_]] extends Async[F] with Timer[F] {
 
   def start[E, A](fea: F[E, A]): F[Nothing, Fibre[F, E, A]]
 
@@ -48,7 +48,9 @@ object Concurrent extends ConcurrentStaticOps {
 
   def apply[F[+_, +_] : Concurrent]: Concurrent[F] = implicitly[Concurrent[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit concurrent: Concurrent[F]) extends Async.Ops[F, E, A](fea) {
+  implicit class Ops[F[+_, +_], E, A](protected val fea: F[E, A])(implicit concurrent: Concurrent[F]) extends Async.Ops[F, E, A](fea) with TimerOps[F, E, A] {
+    override protected def timerInstance: Timer[F] = concurrent
+
     def start: F[Nothing, Fibre[F, E, A]] = concurrent.start(fea)
     def fork: F[Nothing, Fibre[F, E, A]] = concurrent.fork(fea)
 
@@ -57,7 +59,7 @@ object Concurrent extends ConcurrentStaticOps {
 
 }
 
-trait ConcurrentStaticOps extends AsyncStaticOps with ConcurrentParNs {
+trait ConcurrentStaticOps extends AsyncStaticOps with TimerStaticOps with ConcurrentParNs {
   def race[F[+_, +_]: Concurrent, E, A, B](fea: F[E, A], feb: F[E, B]): F[E, Either[A, B]] = Concurrent[F].race(fea, feb)
 }
 
