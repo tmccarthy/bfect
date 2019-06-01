@@ -13,22 +13,22 @@
   *    See the License for the specific language governing permissions and
   *    limitations under the License.
   */
-package au.id.tmm.bfect.extraeffects
+package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.BifunctorMonad
+import java.time.Instant
 
-trait EnvVars[F[+_, +_]] extends BifunctorMonad[F] {
-  def envVars: F[Nothing, Map[String, String]]
+trait Now[F[+_, +_]] {
 
-  def envVar(key: String): F[Nothing, Option[String]] =
-    map(envVars)(_.get(key))
+  def now: F[Nothing, Instant]
 
-  def envVarOrError[E](key: String, onMissing: => E): F[E, String] =
-    flatMap(envVars)(_.get(key).fold[F[E, String]](leftPure(onMissing))(rightPure))
 }
 
-object EnvVars {
+object Now extends NowStaticOps {
 
-  def apply[F[+_, +_] : EnvVars]: EnvVars[F] = implicitly[EnvVars[F]]
+  def apply[F[+_, +_] : Now]: Now[F] = implicitly[Now[F]]
 
+}
+
+trait NowStaticOps {
+  def now[F[+_, +_] : Now]: F[Nothing, Instant] = Now[F].now
 }

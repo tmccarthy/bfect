@@ -27,7 +27,7 @@ import scalaz.zio.{Exit, Fiber, IO}
 
 import scala.concurrent.duration.{Duration => ScalaDuration}
 
-private[ziointerop] object ZioInstanceImpls {
+object ZioInstanceImpls {
 
   class ZioBifunctor extends Bifunctor[IO] {
     override def biMap[L1, R1, L2, R2](f: IO[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): IO[L2, R2] = f.bimap(leftF, rightF)

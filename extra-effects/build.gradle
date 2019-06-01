@@ -21,6 +21,4 @@ apply plugin: au.id.tmm.buildsrc.MyReleasePlugin
 
 dependencies {
     compile project(':bfect-core')
-
-    compile 'commons-io:commons-io:2.6'
 }

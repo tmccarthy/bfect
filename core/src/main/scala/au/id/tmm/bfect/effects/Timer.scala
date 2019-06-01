@@ -22,14 +22,12 @@ import au.id.tmm.bfect.{BifunctorMonad, BifunctorMonadStaticOps}
 
 import scala.concurrent.duration.{Duration => ScalaDuration, FiniteDuration => FiniteScalaDuration}
 
-trait Timer[F[+_, +_]] extends BifunctorMonad[F] {
+trait Timer[F[+_, +_]] extends BifunctorMonad[F] with Now[F] {
 
   def sleep(duration: Duration): F[Nothing, Unit]
 
   def sleep(scalaDuration: ScalaDuration): F[Nothing, Unit] =
     sleep(convertScalaDurationToJavaDuration(scalaDuration))
-
-  def now: F[Nothing, Instant]
 
   def repeatFixedDelay[E](fea: F[E, _])(delay: Duration): F[E, Nothing] =
     forever(flatMap(fea)(_ => sleep(delay)))
@@ -85,8 +83,7 @@ trait TimerOps[F[+_, +_], E, A] {
   def repeatFixedRate(periodAsScalaDuration: ScalaDuration): F[E, Nothing] = timerInstance.repeatFixedRate(fea, periodAsScalaDuration)
 }
 
-trait TimerStaticOps extends BifunctorMonadStaticOps {
+trait TimerStaticOps extends BifunctorMonadStaticOps with NowStaticOps {
   def sleep[F[+_, +_] : Timer](duration: Duration): F[Nothing, Unit] = Timer[F].sleep(duration)
   def sleep[F[+_, +_] : Timer](scalaDuration: ScalaDuration): F[Nothing, Unit] = Timer[F].sleep(scalaDuration)
-  def now[F[+_, +_] : Timer]: F[Nothing, Instant] = Timer[F].now
 }
