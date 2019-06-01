@@ -13,7 +13,7 @@
   *    See the License for the specific language governing permissions and
   *    limitations under the License.
   */
-package au.id.tmm.bfect.extraeffects
+package au.id.tmm.bfect.effects.extra
 
 import java.time._
 
