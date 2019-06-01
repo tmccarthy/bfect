@@ -196,7 +196,7 @@ trait ZioExtraEffectInstances {
 
 }
 
-trait ZioInstances {
+trait ZioInstances extends ZioExtraEffectInstances {
 
   import ZioInstanceImpls._
 

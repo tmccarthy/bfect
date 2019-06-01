@@ -153,15 +153,15 @@ object BState {
         }
       }
 
-    def nowFromState(state: S): (S, Instant)
+    protected def nowFromState(state: S): (S, Instant)
 
-    def applySleepToState(sleepDuration: Duration, state: S): S
+    protected def applySleepToState(sleepDuration: Duration, state: S): S
   }
 
   trait TimerInstance[S] extends ConcurrentInstance[S] with Timer[BState[S, +?, +?]] {
-    def nowFromState(state: S): (S, Instant)
+    protected def nowFromState(state: S): (S, Instant)
 
-    def applySleepToState(sleepDuration: Duration, state: S): S
+    protected def applySleepToState(sleepDuration: Duration, state: S): S
 
     override def sleep(duration: Duration): BState[S, Nothing, Unit] =
       BState(state => (applySleepToState(duration, state), Right(())))
