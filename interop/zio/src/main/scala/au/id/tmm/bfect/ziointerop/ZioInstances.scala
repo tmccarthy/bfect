@@ -15,11 +15,13 @@
   */
 package au.id.tmm.bfect.ziointerop
 
-import java.time.{Duration, Instant}
+import java.io.InputStream
+import java.time._
 import java.util.concurrent.TimeUnit
 
 import au.id.tmm.bfect._
 import au.id.tmm.bfect.effects._
+import au.id.tmm.bfect.effects.extra.{Calendar, Console, EnvVars, Resources}
 import scalaz.zio
 import scalaz.zio.clock.Clock
 import scalaz.zio.duration.{Duration => ZioDuration}
@@ -153,18 +155,57 @@ object ZioInstanceImpls {
       }
   }
 
+  class ZioCalendar extends ZioBifunctorMonad with Calendar[IO] {
+    override def localTimezone: IO[Nothing, ZoneId]             = IO.effectTotal(ZoneId.systemDefault())
+    override def now: IO[Nothing, Instant]                      = IO.effectTotal(Instant.now())
+    override def nowInstant: IO[Nothing, Instant]               = IO.effectTotal(Instant.now())
+    override def nowZonedDateTime: IO[Nothing, ZonedDateTime]   = IO.effectTotal(ZonedDateTime.now())
+    override def nowLocalDateTime: IO[Nothing, LocalDateTime]   = IO.effectTotal(LocalDateTime.now())
+    override def nowLocalDate: IO[Nothing, LocalDate]           = IO.effectTotal(LocalDate.now())
+    override def nowLocalTime: IO[Nothing, LocalTime]           = IO.effectTotal(LocalTime.now())
+    override def nowOffsetDateTime: IO[Nothing, OffsetDateTime] = IO.effectTotal(OffsetDateTime.now())
+  }
+
+  class ZioConsole extends Console[IO] {
+    override val lineSeparator: String = System.lineSeparator()
+    override def print(string: String): IO[Nothing, Unit]         = IO.effectTotal(scala.Console.print(string))
+    override def println(string: String): IO[Nothing, Unit]       = IO.effectTotal(scala.Console.println(string))
+    override def printStdErr(string: String): IO[Nothing, Unit]   = IO.effectTotal(scala.Console.err.print(string))
+    override def printlnStdErr(string: String): IO[Nothing, Unit] = IO.effectTotal(scala.Console.err.println(string))
+  }
+
+  class ZioEnvVars extends ZioBifunctorMonad with EnvVars[IO] {
+    override def envVars: IO[Nothing, Map[String, String]] = IO.effectTotal(sys.env)
+  }
+
+  class ZioResources extends ZioSync with Resources[IO] {
+    override def getResourceAsStream(resourceName: String): IO[Nothing, Option[InputStream]] =
+      IO.effectTotal(Option(getClass.getResourceAsStream(resourceName)))
+  }
+
+}
+
+trait ZioExtraEffectInstances {
+
+  import ZioInstanceImpls._
+
+  implicit val zioCalendar: Calendar[IO]   = new ZioCalendar
+  implicit val zioConsole: Console[IO]     = new ZioConsole
+  implicit val zioEnvVars: EnvVars[IO]     = new ZioEnvVars
+  implicit val zioResources: Resources[IO] = new ZioResources
+
 }
 
 trait ZioInstances {
 
   import ZioInstanceImpls._
 
-  implicit def zioBfectBifunctor: Bifunctor[IO]           = new ZioBifunctor
-  implicit def zioBfectBifunctorMonad: BifunctorMonad[IO] = new ZioBifunctorMonad
-  implicit def zioBfectBME: BME[IO]                       = new ZioBME
-  implicit def zioBfectBracket: Bracket[IO]               = new ZioBracket
-  implicit def zioBfectSync: Sync[IO]                     = new ZioSync
-  implicit def zioBfectAsync: Async[IO]                   = new ZioAsync
-  implicit def zioBfectConcurrent: Concurrent[IO]         = new ZioConcurrent
+  implicit val zioBfectBifunctor: Bifunctor[IO]           = new ZioBifunctor
+  implicit val zioBfectBifunctorMonad: BifunctorMonad[IO] = new ZioBifunctorMonad
+  implicit val zioBfectBME: BME[IO]                       = new ZioBME
+  implicit val zioBfectBracket: Bracket[IO]               = new ZioBracket
+  implicit val zioBfectSync: Sync[IO]                     = new ZioSync
+  implicit val zioBfectAsync: Async[IO]                   = new ZioAsync
+  implicit val zioBfectConcurrent: Concurrent[IO]         = new ZioConcurrent
 
 }
