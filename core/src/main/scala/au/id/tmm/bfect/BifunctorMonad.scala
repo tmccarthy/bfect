@@ -27,6 +27,11 @@ trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
 
   def leftPure[E](e: E): F[E, Nothing]
 
+  def fromOption[E, A](option: Option[A], ifNone: => E): F[E, A] = option match {
+    case Some(a) => rightPure(a)
+    case None    => leftPure(ifNone)
+  }
+
   def fromEither[E, A](either: Either[E, A]): F[E, A] = either match {
     case Left(e)  => leftPure(e)
     case Right(a) => rightPure(a)
@@ -69,6 +74,7 @@ trait BifunctorMonadStaticOps {
   def pure[F[+_, +_] : BifunctorMonad, A](a: A): F[Nothing, A] = BifunctorMonad[F].pure(a)
   def leftPure[F[+_, +_] : BifunctorMonad, E](e: E): F[E, Nothing] = BifunctorMonad[F].leftPure(e)
   def fromEither[F[+_, +_] : BifunctorMonad, E, A](either: Either[E, A]): F[E, A] = BifunctorMonad[F].fromEither(either)
+  def fromOption[F[+_, +_] : BifunctorMonad, E, A](option: Option[A], ifNone: => E): F[E, A] = BifunctorMonad[F].fromOption(option, ifNone)
   def fromTry[F[+_, +_] : BifunctorMonad, A](aTry: Try[A]): F[Throwable, A] = BifunctorMonad[F].fromTry(aTry)
   def unit[F[+_, +_] : BifunctorMonad]: F[Nothing, Unit] = BifunctorMonad[F].unit
 }
