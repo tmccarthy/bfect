@@ -44,26 +44,26 @@ a typeclass you will import it and the `Ops` like so:
 ```scala
 import au.id.tmm.bfect.effects.Sync
 import au.id.tmm.bfect.effects.Sync.Ops
-import au.id.tmm.bfect.ziointerop._
 
-type BIO[+E, +A] = scalaz.zio.IO[E, A]
+// Companion objects provide static methods:
 
-// Companion object provides static methods. The following are equivalent
+def hello1[F[+_, +_] : Sync]: F[Nothing, String] = Sync[F].pure("hello")
+def hello2[F[+_, +_] : Sync]: F[Nothing, String] = Sync.pure("hello")
 
-Sync[BIO].pure("hello")
-Sync.pure("hello")
+def print1[F[+_, +_] : Sync](string: String): F[Nothing, Unit] = Sync[F].sync(println(string))
+def print2[F[+_, +_] : Sync](string: String): F[Nothing, Unit] = Sync.sync(println(string))
 
-// Sync.Ops provides instance methods. The following are equivalent
+// Sync.Ops provides instance methods. The following are equivalent:
 
-val io = Sync.pure("hello")
-
-Sync[BIO].flatMap(io)(s => Sync.sync(println(s)))
-io.flatMap(s => Sync.sync(println(s)))
+def printHello1[F[+_, +_] : Sync]: F[Nothing, Unit] = Sync[F].flatMap(hello1)(print1)
+def printHello2[F[+_, +_] : Sync]: F[Nothing, Unit] = hello1.flatMap(print1)
 
 // Importing Sync.Ops enables for-yield syntax:
 
-for {
-  s <- Sync.pure("hello")
-  _ <- Sync.sync(println(s))
-} yield ()
+def printHello3[F[+_, +_] : Sync]: F[Nothing, Unit] =
+  for {
+    hello <- hello1
+    _     <- print1(hello)
+  } yield ()
+
 ```
