@@ -53,6 +53,8 @@ trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
     */
   def tailRecM[E, A, A1](a: A)(f: A => F[E, Either[A, A1]]): F[E, A1]
 
+  def unit[E, A](fea: F[E, A]): F[E, Unit] = flatMap(fea)(_ => unit)
+
 }
 
 object BifunctorMonad extends BifunctorMonadStaticOps {
@@ -61,6 +63,7 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
   implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F]) extends Bifunctor.Ops[F, E, A](fea)(bifunctorMonad) {
     def flatMap[E2 >: E, B](f: A => F[E2, B]): F[E2, B] = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
     def forever: F[E, Nothing] = bifunctorMonad.forever(fea)
+    def unit: F[E, Unit] = bifunctorMonad.unit(fea)
   }
 
   implicit class FlattenOps[F[+_, +_], E1, E2 >: E1, A](fefea: F[E1, F[E2, A]])(implicit bifunctorMonad: BifunctorMonad[F]) {

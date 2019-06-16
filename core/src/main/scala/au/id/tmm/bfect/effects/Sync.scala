@@ -54,8 +54,11 @@ trait Sync[F[+_, +_]] extends Bracket[F] {
       case NonFatal(t) => t
     }
 
-  def bracketCloseable[R <: AutoCloseable, E, A](acquire: F[E, R])(use: R => F[E, A]): F[E, A] =
+  def bracketCloseable[R <: AutoCloseable, E, A](acquire: F[E, R], use: R => F[E, A]): F[E, A] =
     bracket(acquire)(r => sync(r.close()))(use)
+
+  def bracketCloseable[R <: AutoCloseable, E](acquire: F[E, R]): Bracket.PartialAcquireRelease[F, R, E] =
+    new Bracket.PartialAcquireRelease[F, R, E](this, acquire, r => sync(r.close()))
 
 }
 
@@ -77,5 +80,5 @@ trait SyncStaticOps extends BracketStaticOps {
   def syncCatch[F[+_, +_] : Sync, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = Sync[F].syncCatch(block)(catchPf)
   def syncException[F[+_, +_] : Sync, A](block: => A): F[Exception, A] = Sync[F].syncException(block)
   def syncThrowable[F[+_, +_] : Sync, A](block: => A): F[Throwable, A] = Sync[F].syncThrowable(block)
-  def bracketCloseable[F[+_, +_] : Sync, R <: AutoCloseable, E, A](acquire: F[E, R])(use: R => F[E, A]): F[E, A] = Sync[F].bracketCloseable(acquire)(use)
+  def bracketCloseable[F[+_, +_] : Sync, R <: AutoCloseable, E, A](acquire: F[E, R], use: R => F[E, A]): F[E, A] = Sync[F].bracketCloseable(acquire, use)
 }

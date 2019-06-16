@@ -101,7 +101,7 @@ object BState {
     override def suspend[E, A](effect: => BState[S, E, A]): BState[S, E, A] =
       BState[S, E, BState[S, E, A]](s => (s, Right(effect))).flatten[E, A]
 
-    override def bracketCase[R, E, A](acquire: BState[S, E, R])(release: (R, ExitCase[E, A]) => BState[S, Nothing, _])(use: R => BState[S, E, A]): BState[S, E, A] =
+    override def bracketCase[R, E, A](acquire: BState[S, E, R], release: (R, ExitCase[E, A]) => BState[S, Nothing, _], use: R => BState[S, E, A]): BState[S, E, A] =
       BState { state =>
         val (stateAfterAcquisition, result) = acquire.run(state)
 

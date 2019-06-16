@@ -34,11 +34,9 @@ trait Resources[F[+_, +_]] extends Sync[F] {
           case Some(stream) => pure(stream): F[ResourceStreamError[E], InputStream]
           case None         => leftPure(ResourceStreamError.ResourceNotFound): F[ResourceStreamError[E], InputStream]
         }
-      }
-    )(
-      release = stream => sync(stream.close())
-    )(
-      use = use.andThen(fea => leftMap(fea)(ResourceStreamError.UseError.apply))
+      },
+      release = stream => sync(stream.close()),
+      use = use.andThen(fea => leftMap(fea)(ResourceStreamError.UseError.apply)),
     )
 
   def resourceAsString(resourceName: String, charset: Charset = Charset.forName("UTF-8")): F[ResourceStreamError[IOException], String] =

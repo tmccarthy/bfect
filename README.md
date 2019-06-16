@@ -7,11 +7,11 @@ A collection of bifunctor effect typeclasses, with instances for ZIO and convers
 
 ## Project structure
 
-* *`bfect-core`* - A collection of bifunctor effect typeclasses, based loosely around the structure of cats-effect
-* *`bfect-testing`* - An implementation of a bifunctor [state monad](https://typelevel.org/cats/datatypes/state.html) along with instances for the `bfect-core` typeclasses
-* *`bfect-interop-cats`* - Implicit conversions between the `bfect-core` typeclasses and their analogs in `cats-core` and `cats-effect`
-* *`bfect-interop-zio`* - Instances of the `bfect-core` typeclasses for the [ZIO IO monad](https://github.com/zio/zio)
-* *`bfect-io`* - A half-finished bifunctor IO monad (don't use this)
+* **`bfect-core`** - A collection of bifunctor effect typeclasses, based loosely around the structure of cats-effect
+* **`bfect-testing`** - An implementation of a bifunctor [state monad](https://typelevel.org/cats/datatypes/state.html) along with instances for the `bfect-core` typeclasses
+* **`bfect-interop-cats`** - Implicit conversions between the `bfect-core` typeclasses and their analogs in `cats-core` and `cats-effect`
+* **`bfect-interop-zio`** - Instances of the `bfect-core` typeclasses for the [ZIO IO monad](https://github.com/zio/zio)
+* **`bfect-io`** - A half-finished bifunctor IO monad (don't use this)
 
 Each of these are available through [Maven Central](https://repo.maven.apache.org/maven2/au/id/tmm/bfect/), just add them to your project with your favourite build tool.
 
@@ -21,7 +21,7 @@ Each of these are available through [Maven Central](https://repo.maven.apache.or
 
 Typeclass | Cats equivalent | Comment |
 ----------|-----------------|---------|
-[`Bifunctor`](core/src/main/scala/au/id/tmm/bfect/Bifunctor.scala) | `cats.Bifunctor` | Functor with `biMap` and its derivations (`map`/`rightMap`, `leftMap`) |
+[`Bifunctor`](core/src/main/scala/au/id/tmm/bfect/Bifunctor.scala) | `cats.Functor`/`cats.Bifunctor` | Functor with `biMap` and its derivations (`map`/`rightMap`, `leftMap`) |
 [`BifunctorMonad`](core/src/main/scala/au/id/tmm/bfect/BifunctorMonad.scala) | `cats.Monad` | Monad. Adds `flatMap`, `rightPure` and `leftPure`. |
 [`BifunctorMonadError`](core/src/main/scala/au/id/tmm/bfect/BifunctorMonadError.scala) | `cats.MonadError` | Represents the ability to handle errors with `handleErrorWith`. Comes with the alias `BME`. |
 [`effects.Bracket`](core/src/main/scala/au/id/tmm/bfect/effects/Bracket.scala) | `cats.effect.Bracket` | Bracket. Represents the pure equivalent of `try`/`finally` |

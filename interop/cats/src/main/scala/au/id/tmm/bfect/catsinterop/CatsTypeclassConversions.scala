@@ -60,7 +60,7 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
         bfectBracket.handleErrorWith[Throwable, Unit, Nothing](release(resource, catsExitCase))(t => throw t)
       }
 
-      bfectBracket.bracketCase[A, Throwable, B](acquire)(releaseForBfectBracket)(use)
+      bfectBracket.bracketCase[A, Throwable, B](acquire, releaseForBfectBracket, use)
     }
   }
 

@@ -60,7 +60,7 @@ object ZioInstanceImpls {
       case Exit.Failure(cause) => ExitCase.Failed(DataConversions.zioCauseToBfectFailure(cause))
     }
 
-    override def bracketCase[R, E, A](acquire: IO[E, R])(release: (R, ExitCase[E, A]) => IO[Nothing, _])(use: R => IO[E, A]): IO[E, A] = {
+    override def bracketCase[R, E, A](acquire: IO[E, R], release: (R, ExitCase[E, A]) => IO[Nothing, _], use: R => IO[E, A]): IO[E, A] = {
       val releaseForZioBracket: (R, zio.Exit[E, A]) => IO[Nothing, _] = { case (resource, zioExit) =>
         release(resource, bfectExitCaseFrom(zioExit))
       }
@@ -68,7 +68,7 @@ object ZioInstanceImpls {
       IO.bracketExit[Any, E, R, A](acquire, releaseForZioBracket, use)
     }
 
-    override def bracket[R, E, A](acquire: IO[E, R])(release: R => IO[Nothing, _])(use: R => IO[E, A]): IO[E, A] =
+    override def bracket[R, E, A](acquire: IO[E, R], release: R => IO[Nothing, _], use: R => IO[E, A]): IO[E, A] =
       IO.bracket[Any, E, R, A](acquire, release, use)
 
     override def ensure[E, A](fea: IO[E, A])(finalizer: IO[Nothing, _]): IO[E, A] =
