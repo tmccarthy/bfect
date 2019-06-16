@@ -17,6 +17,7 @@ package au.id.tmm.bfect.testing
 
 import java.time.{Duration, Instant}
 
+import au.id.tmm.bfect.effects.extra.Resources
 import au.id.tmm.bfect.effects.{Concurrent, Timer}
 import au.id.tmm.bfect.{ExitCase, Failure, Fibre}
 
@@ -175,11 +176,17 @@ object BState {
   }
 
   /**
-    * Provides an instance for `Timer` where `now` is always 1970-01-01T00:00:00Z, and sleep does not alter the state.
+    * Includes:
+    * - an instance for `Timer` where `now` is always 1970-01-01T00:00:00Z, and sleep does
+    *   not alter the state.
+    * - an instance for `Resources` that reads the live resources
     */
-  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]] = new ConcurrentInstance[S] {
+  trait CompleteConcurrentInstance[S] extends ConcurrentInstance[S] with Resources.Live[BState[S, +?, +?]] {
     override def nowFromState(state: S): (S, Instant) = (state, Instant.EPOCH)
     override def applySleepToState(sleepDuration: Duration, state: S): S = state
   }
+
+  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]] =
+    new CompleteConcurrentInstance[S] {}
 
 }

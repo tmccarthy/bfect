@@ -15,7 +15,6 @@
   */
 package au.id.tmm.bfect.ziointerop
 
-import java.io.InputStream
 import java.time._
 import java.util.concurrent.TimeUnit
 
@@ -155,33 +154,13 @@ object ZioInstanceImpls {
       }
   }
 
-  class ZioCalendar extends ZioBifunctorMonad with Calendar[IO] {
-    override def localTimezone: IO[Nothing, ZoneId]             = IO.effectTotal(ZoneId.systemDefault())
-    override def now: IO[Nothing, Instant]                      = IO.effectTotal(Instant.now())
-    override def nowInstant: IO[Nothing, Instant]               = IO.effectTotal(Instant.now())
-    override def nowZonedDateTime: IO[Nothing, ZonedDateTime]   = IO.effectTotal(ZonedDateTime.now())
-    override def nowLocalDateTime: IO[Nothing, LocalDateTime]   = IO.effectTotal(LocalDateTime.now())
-    override def nowLocalDate: IO[Nothing, LocalDate]           = IO.effectTotal(LocalDate.now())
-    override def nowLocalTime: IO[Nothing, LocalTime]           = IO.effectTotal(LocalTime.now())
-    override def nowOffsetDateTime: IO[Nothing, OffsetDateTime] = IO.effectTotal(OffsetDateTime.now())
-  }
+  class ZioCalendar extends ZioSync with Calendar.Live[IO]
 
-  class ZioConsole extends Console[IO] {
-    override val lineSeparator: String = System.lineSeparator()
-    override def print(string: String): IO[Nothing, Unit]         = IO.effectTotal(scala.Console.print(string))
-    override def println(string: String): IO[Nothing, Unit]       = IO.effectTotal(scala.Console.println(string))
-    override def printStdErr(string: String): IO[Nothing, Unit]   = IO.effectTotal(scala.Console.err.print(string))
-    override def printlnStdErr(string: String): IO[Nothing, Unit] = IO.effectTotal(scala.Console.err.println(string))
-  }
+  class ZioConsole extends ZioSync with Console.Live[IO]
 
-  class ZioEnvVars extends ZioBifunctorMonad with EnvVars[IO] {
-    override def envVars: IO[Nothing, Map[String, String]] = IO.effectTotal(sys.env)
-  }
+  class ZioEnvVars extends ZioSync with EnvVars.Live[IO]
 
-  class ZioResources extends ZioSync with Resources[IO] {
-    override def getResourceAsStream(resourceName: String): IO[Nothing, Option[InputStream]] =
-      IO.effectTotal(Option(getClass.getResourceAsStream(resourceName)))
-  }
+  class ZioResources extends ZioSync with Resources.Live[IO]
 
 }
 

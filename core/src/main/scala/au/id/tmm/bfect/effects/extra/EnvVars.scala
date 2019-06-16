@@ -16,6 +16,7 @@
 package au.id.tmm.bfect.effects.extra
 
 import au.id.tmm.bfect.BifunctorMonad
+import au.id.tmm.bfect.effects.Sync
 
 trait EnvVars[F[+_, +_]] extends BifunctorMonad[F] {
   def envVars: F[Nothing, Map[String, String]]
@@ -30,5 +31,9 @@ trait EnvVars[F[+_, +_]] extends BifunctorMonad[F] {
 object EnvVars {
 
   def apply[F[+_, +_] : EnvVars]: EnvVars[F] = implicitly[EnvVars[F]]
+
+  trait Live[F[+_, +_]] extends EnvVars[F] { self: Sync[F] =>
+    override def envVars: F[Nothing, Map[String, String]] = sync(sys.env)
+  }
 
 }

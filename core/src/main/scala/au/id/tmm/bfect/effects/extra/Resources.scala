@@ -61,4 +61,9 @@ object Resources {
     final case class UseError[E](cause: E) extends ResourceStreamError[E]
   }
 
+  trait Live[F[+_, +_]] extends Resources[F] { self: Sync[F] =>
+    override def getResourceAsStream(resourceName: String): F[Nothing, Option[InputStream]] =
+      sync(Option(getClass.getResourceAsStream(resourceName)))
+  }
+
 }

@@ -18,7 +18,7 @@ package au.id.tmm.bfect.effects.extra
 import java.time._
 
 import au.id.tmm.bfect.BifunctorMonad
-import au.id.tmm.bfect.effects.Now
+import au.id.tmm.bfect.effects.{Now, Sync}
 
 trait Calendar[F[+_, +_]] extends BifunctorMonad[F] with Now[F] {
 
@@ -45,5 +45,16 @@ trait Calendar[F[+_, +_]] extends BifunctorMonad[F] with Now[F] {
 object Calendar {
 
   def apply[F[+_, +_] : Calendar]: Calendar[F] = implicitly[Calendar[F]]
+
+  trait Live[F[+_, +_]] extends Calendar[F] { self: Sync[F] =>
+    override def localTimezone: F[Nothing, ZoneId]             = sync(ZoneId.systemDefault())
+    override def now: F[Nothing, Instant]                      = sync(Instant.now())
+    override def nowInstant: F[Nothing, Instant]               = sync(Instant.now())
+    override def nowZonedDateTime: F[Nothing, ZonedDateTime]   = sync(ZonedDateTime.now())
+    override def nowLocalDateTime: F[Nothing, LocalDateTime]   = sync(LocalDateTime.now())
+    override def nowLocalDate: F[Nothing, LocalDate]           = sync(LocalDate.now())
+    override def nowLocalTime: F[Nothing, LocalTime]           = sync(LocalTime.now())
+    override def nowOffsetDateTime: F[Nothing, OffsetDateTime] = sync(OffsetDateTime.now())
+  }
 
 }
