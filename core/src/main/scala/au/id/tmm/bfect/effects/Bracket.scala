@@ -16,9 +16,9 @@
 package au.id.tmm.bfect.effects
 
 import au.id.tmm.bfect.effects.Bracket.{PartialAcquire, PartialCaseAcquire}
-import au.id.tmm.bfect.{BME, BifunctorMonadStaticOps, ExitCase}
+import au.id.tmm.bfect.{BifunctorMonad, BifunctorMonadStaticOps, ExitCase}
 
-trait Bracket[F[+_, +_]] extends BME[F] {
+trait Bracket[F[+_, +_]] extends BifunctorMonad[F] {
 
   def bracketCase[R, E, A](acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _], use: R => F[E, A]): F[E, A]
 
@@ -48,7 +48,7 @@ trait Bracket[F[+_, +_]] extends BME[F] {
 object Bracket extends BracketStaticOps {
   def apply[F[+_, +_] : Bracket]: Bracket[F] = implicitly[Bracket[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) extends BME.Ops[F, E, A](fea) {
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) extends BifunctorMonad.Ops[F, E, A](fea) {
     def ensure(finalizer: F[Nothing, _]): F[E, A] = bracket.ensure(fea)(finalizer)
     def ensureCase(finalizer: ExitCase[E, A] => F[Nothing, _]): F[E, A] = bracket.ensureCase(fea)(finalizer)
   }
@@ -76,4 +76,11 @@ object Bracket extends BracketStaticOps {
 trait BracketStaticOps extends BifunctorMonadStaticOps {
   def bracketCase[F[+_, +_] : Bracket, R, E, A](acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _], use: R => F[E, A]): F[E, A] = Bracket[F].bracketCase[R, E, A](acquire, release, use)
   def bracket[F[+_, +_] : Bracket, R, E, A](acquire: F[E, R], release: R => F[Nothing, _], use: R => F[E, A]): F[E, A] = Bracket[F].bracket[R, E, A](acquire, release, use)
+
+  def bracketCloseable[F[+_, +_] : Bracket : Sync, R <: AutoCloseable, E, A](acquire: F[E, R], use: R => F[E, A]): F[E, A] =
+    Bracket[F].bracket[R, E, A](acquire, r => Sync[F].sync(r.close()), use)
+
+  def bracketCloseable[F[+_, +_] : Bracket : Sync, R <: AutoCloseable, E](acquire: F[E, R]): Bracket.PartialAcquireRelease[F, R, E] =
+    new Bracket.PartialAcquireRelease[F, R, E](Bracket[F], acquire, r => Sync[F].sync(r.close()))
+
 }

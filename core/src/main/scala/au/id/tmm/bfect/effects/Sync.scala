@@ -15,9 +15,11 @@
   */
 package au.id.tmm.bfect.effects
 
+import au.id.tmm.bfect.{BME, BifunctorMonadErrorStaticOps}
+
 import scala.util.control.NonFatal
 
-trait Sync[F[+_, +_]] extends Bracket[F] {
+trait Sync[F[+_, +_]] extends BME[F] {
 
   def suspend[E, A](effect: => F[E, A]): F[E, A]
 
@@ -54,24 +56,18 @@ trait Sync[F[+_, +_]] extends Bracket[F] {
       case NonFatal(t) => t
     }
 
-  def bracketCloseable[R <: AutoCloseable, E, A](acquire: F[E, R], use: R => F[E, A]): F[E, A] =
-    bracket(acquire)(r => sync(r.close()))(use)
-
-  def bracketCloseable[R <: AutoCloseable, E](acquire: F[E, R]): Bracket.PartialAcquireRelease[F, R, E] =
-    new Bracket.PartialAcquireRelease[F, R, E](this, acquire, r => sync(r.close()))
-
 }
 
 object Sync extends SyncStaticOps {
   def apply[F[+_, +_] : Sync]: Sync[F] = implicitly[Sync[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit sync: Sync[F]) extends Bracket.Ops[F, E, A](fea) {
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit sync: Sync[F]) extends BME.Ops[F, E, A](fea) {
     def orDie(implicit ev: E <:< Throwable): F[Nothing, A] = sync.orDie(fea)
     def refineOrDie[E2](refinePf: PartialFunction[E, E2])(implicit ev: E <:< Throwable): F[E2, A] = sync.refineOrDie[E, A, E2](fea)(refinePf)
   }
 }
 
-trait SyncStaticOps extends BracketStaticOps {
+trait SyncStaticOps extends BifunctorMonadErrorStaticOps {
   def suspend[F[+_, +_] : Sync, E, A](effect: => F[E, A]): F[E, A] = Sync[F].suspend(effect)
   def failUnchecked[F[+_, +_] : Sync](t: Throwable): F[Nothing, Nothing] = Sync[F].failUnchecked(t)
   def die[F[+_, +_] : Sync](t: Throwable): F[Nothing, Nothing] = Sync[F].die(t)
@@ -80,5 +76,4 @@ trait SyncStaticOps extends BracketStaticOps {
   def syncCatch[F[+_, +_] : Sync, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = Sync[F].syncCatch(block)(catchPf)
   def syncException[F[+_, +_] : Sync, A](block: => A): F[Exception, A] = Sync[F].syncException(block)
   def syncThrowable[F[+_, +_] : Sync, A](block: => A): F[Throwable, A] = Sync[F].syncThrowable(block)
-  def bracketCloseable[F[+_, +_] : Sync, R <: AutoCloseable, E, A](acquire: F[E, R], use: R => F[E, A]): F[E, A] = Sync[F].bracketCloseable(acquire, use)
 }

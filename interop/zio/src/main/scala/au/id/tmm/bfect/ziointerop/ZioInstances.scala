@@ -28,15 +28,15 @@ import scalaz.zio.{Exit, Fiber, IO}
 
 import scala.concurrent.duration.{Duration => ScalaDuration}
 
-object ZioInstanceImpls {
+object ZioInstanceMixins {
 
-  class ZioBifunctor extends Bifunctor[IO] {
+  trait ZioBifunctor extends Bifunctor[IO] {
     override def biMap[L1, R1, L2, R2](f: IO[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): IO[L2, R2] = f.bimap(leftF, rightF)
     override def rightMap[L, R1, R2](f: IO[L, R1])(rightF: R1 => R2): IO[L, R2] = f.map(rightF)
     override def leftMap[L1, R, L2](f: IO[L1, R])(leftF: L1 => L2): IO[L2, R] = f.mapError(leftF)
   }
 
-  class ZioBifunctorMonad extends ZioBifunctor with BifunctorMonad[IO] {
+  trait ZioBMonad extends BifunctorMonad[IO] { self: BFunctor[IO] =>
     override def rightPure[A](a: A): IO[Nothing, A] = IO.succeed(a)
     override def leftPure[E](e: E): IO[E, Nothing] = IO.fail(e)
     override def flatMap[E1, E2 >: E1, A, B](fe1a: IO[E1, A])(fafe2b: A => IO[E2, B]): IO[E2, B] = fe1a.flatMap(fafe2b)
@@ -47,13 +47,13 @@ object ZioInstanceImpls {
       }
   }
 
-  class ZioBME extends ZioBifunctorMonad with BME[IO] {
+  trait ZioBME extends BME[IO] { self: BMonad[IO] =>
     override def handleErrorWith[E1, A, E2](fea: IO[E1, A])(f: E1 => IO[E2, A]): IO[E2, A] = fea.catchAll(f)
     override def recoverWith[E1, A, E2 >: E1](fea: IO[E1, A])(catchPf: PartialFunction[E1, IO[E2, A]]): IO[E2, A] = fea.catchSome(catchPf)
     override def attempt[E, A](fea: IO[E, A]): IO[Nothing, Either[E, A]] = fea.either
   }
 
-  class ZioBracket extends ZioBME with Bracket[IO] {
+  trait ZioBracket extends Bracket[IO] { self: BME[IO] =>
 
     private def bfectExitCaseFrom[E, A](zioExit: zio.Exit[E, A]): ExitCase[E, A] = zioExit match {
       case Exit.Success(value) => ExitCase.Succeeded(value)
@@ -75,7 +75,7 @@ object ZioInstanceImpls {
       fea.ensuring(finalizer)
   }
 
-  class ZioSync extends ZioBracket with Sync[IO] {
+  trait ZioSync extends Sync[IO] { self: BME[IO] =>
     override def suspend[E, A](effect: => IO[E, A]): IO[E, A] = IO.suspend(effect)
 
     override def sync[A](block: => A): IO[Nothing, A] =
@@ -90,7 +90,7 @@ object ZioInstanceImpls {
     override def syncThrowable[A](block: => A): IO[Throwable, A] = IO.effect(block)
   }
 
-  class ZioAsync extends ZioSync with Async[IO] {
+  trait ZioAsync extends Async[IO] { self: Sync[IO] =>
     override def async[E, A](registerForTmm: (Either[E, A] => Unit) => Unit): IO[E, A] = {
       val registerForZio: (IO[E, A] => Unit) => Unit = { cbForZio =>
         val cbForTmm: Either[E, A] => Unit = either => cbForZio(IO.fromEither(either))
@@ -112,7 +112,7 @@ object ZioInstanceImpls {
     }
   }
 
-  trait ZioTimer extends ZioBME with Timer[IO] {
+  trait ZioTimer extends Timer[IO] { self: BME[IO] =>
     private val clock = Clock.Live.clock
 
     override def sleep(duration: Duration): IO[Nothing, Unit] = clock.sleep(ZioDuration.fromNanos(duration.toNanos))
@@ -120,7 +120,7 @@ object ZioInstanceImpls {
     override def now: IO[Nothing, Instant] = clock.currentTime(TimeUnit.NANOSECONDS).map(nanos => Instant.ofEpochSecond(nanos / 1000000000, nanos))
   }
 
-  class ZioConcurrent extends ZioAsync with ZioTimer with Concurrent[IO] {
+  trait ZioConcurrent extends Concurrent[IO] { self: BMonad[IO] =>
     def bfectFibreFrom[E, A](zioFiber: Fiber[E, A]): Fibre[IO, E, A] = new Fibre[IO, E, A] {
       override def cancel: IO[Nothing, Unit] = zioFiber.interrupt.unit
       override def join: IO[E, A] = zioFiber.join
@@ -154,14 +154,23 @@ object ZioInstanceImpls {
       }
   }
 
+}
+
+object ZioInstanceImpls {
+  import ziointerop.{ZioInstanceMixins => Mixins}
+
+  class ZioBFunctor extends Mixins.ZioBifunctor
+  class ZioBMonad extends ZioBFunctor with Mixins.ZioBMonad
+  class ZioBME extends ZioBMonad with Mixins.ZioBME
+  class ZioBracket extends ZioBME with Mixins.ZioBracket
+  class ZioSync extends ZioBME with Mixins.ZioSync
+  class ZioAsync extends ZioSync with Mixins.ZioAsync
+  class ZioConcurrent extends ZioAsync with Mixins.ZioConcurrent
+
   class ZioCalendar extends ZioSync with Calendar.Live[IO]
-
   class ZioConsole extends ZioSync with Console.Live[IO]
-
   class ZioEnvVars extends ZioSync with EnvVars.Live[IO]
-
-  class ZioResources extends ZioSync with Resources.Live[IO]
-
+  class ZioResources extends ZioSync with Mixins.ZioBracket with Resources.Live[IO]
 }
 
 trait ZioExtraEffectInstances {
@@ -179,8 +188,8 @@ trait ZioInstances extends ZioExtraEffectInstances {
 
   import ZioInstanceImpls._
 
-  implicit val zioBfectBifunctor: Bifunctor[IO]           = new ZioBifunctor
-  implicit val zioBfectBifunctorMonad: BifunctorMonad[IO] = new ZioBifunctorMonad
+  implicit val zioBfectBifunctor: Bifunctor[IO]           = new ZioBFunctor
+  implicit val zioBfectBifunctorMonad: BifunctorMonad[IO] = new ZioBMonad
   implicit val zioBfectBME: BME[IO]                       = new ZioBME
   implicit val zioBfectBracket: Bracket[IO]               = new ZioBracket
   implicit val zioBfectSync: Sync[IO]                     = new ZioSync

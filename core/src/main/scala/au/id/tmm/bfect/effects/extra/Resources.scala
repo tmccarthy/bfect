@@ -18,12 +18,12 @@ package au.id.tmm.bfect.effects.extra
 import java.io.{IOException, InputStream}
 import java.nio.charset.Charset
 
-import au.id.tmm.bfect.effects.Sync
 import au.id.tmm.bfect.effects.extra.Resources.ResourceStreamError
+import au.id.tmm.bfect.effects.{Bracket, Sync}
 
 import scala.io.Source
 
-trait Resources[F[+_, +_]] extends Sync[F] {
+trait Resources[F[+_, +_]] extends Sync[F] with Bracket[F] {
 
   def getResourceAsStream(resourceName: String): F[Nothing, Option[InputStream]]
 

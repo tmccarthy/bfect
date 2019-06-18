@@ -17,6 +17,12 @@ package au.id.tmm
 
 package object bfect {
 
+  type BFunctor[F[_, _]] = Bifunctor[F]
+  val BFunctor: Bifunctor.type = Bifunctor
+
+  type BMonad[F[+_, +_]] = BifunctorMonad[F]
+  val BMonad: BifunctorMonad.type = BifunctorMonad
+
   type BME[F[+_, +_]] = BifunctorMonadError[F]
   val BME: BifunctorMonadError.type = BifunctorMonadError
 

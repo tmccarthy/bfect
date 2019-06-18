@@ -18,7 +18,7 @@ package au.id.tmm.bfect.testing
 import java.time.{Duration, Instant}
 
 import au.id.tmm.bfect.effects.extra.Resources
-import au.id.tmm.bfect.effects.{Concurrent, Timer}
+import au.id.tmm.bfect.effects.{Async, Bracket, Concurrent, Timer}
 import au.id.tmm.bfect.{ExitCase, Failure, Fibre}
 
 import scala.util.Random
@@ -60,7 +60,7 @@ object BState {
 
   def leftPure[S, E](e: E): BState[S, E, Nothing] = BState(s => (s, Left(e)))
 
-  trait ConcurrentInstance[S] extends Concurrent[BState[S, +?, +?]] {
+  trait ConcurrentInstance[S] extends Concurrent[BState[S, +?, +?]] with Async[BState[S, +?, +?]] with Bracket[BState[S, +?, +?]] with Timer[BState[S, +?, +?]] {
 
     private def asFibre[E, A](fea: BState[S, E, A]): Fibre[BState[S, +?, +?], E, A] = new Fibre[BState[S, +?, +?], E, A] {
       override def cancel: BState[S, Nothing, Unit] = BState[S, Nothing, Unit](d => (d, Right(())))

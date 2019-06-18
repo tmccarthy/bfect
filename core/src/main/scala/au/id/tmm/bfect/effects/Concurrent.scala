@@ -15,9 +15,9 @@
   */
 package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.Fibre
+import au.id.tmm.bfect.{BifunctorMonad, BifunctorMonadStaticOps, Fibre}
 
-trait Concurrent[F[+_, +_]] extends Async[F] with Timer[F] {
+trait Concurrent[F[+_, +_]] extends BifunctorMonad[F] {
 
   def start[E, A](fea: F[E, A]): F[Nothing, Fibre[F, E, A]]
 
@@ -48,9 +48,7 @@ object Concurrent extends ConcurrentStaticOps {
 
   def apply[F[+_, +_] : Concurrent]: Concurrent[F] = implicitly[Concurrent[F]]
 
-  implicit class Ops[F[+_, +_], E, A](protected val fea: F[E, A])(implicit concurrent: Concurrent[F]) extends Async.Ops[F, E, A](fea) with TimerOps[F, E, A] {
-    override protected def timerInstance: Timer[F] = concurrent
-
+  implicit class Ops[F[+_, +_], E, A](protected val fea: F[E, A])(implicit concurrent: Concurrent[F]) extends BifunctorMonad.Ops[F, E, A](fea) {
     def start: F[Nothing, Fibre[F, E, A]] = concurrent.start(fea)
     def fork: F[Nothing, Fibre[F, E, A]] = concurrent.fork(fea)
 
@@ -59,7 +57,7 @@ object Concurrent extends ConcurrentStaticOps {
 
 }
 
-trait ConcurrentStaticOps extends AsyncStaticOps with TimerStaticOps with ConcurrentParNs {
+trait ConcurrentStaticOps extends BifunctorMonadStaticOps {
   def race[F[+_, +_]: Concurrent, E, A, B](fea: F[E, A], feb: F[E, B]): F[E, Either[A, B]] = Concurrent[F].race(fea, feb)
 }
 
