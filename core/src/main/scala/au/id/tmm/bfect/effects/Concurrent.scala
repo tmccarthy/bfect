@@ -114,6 +114,53 @@ trait ConcurrentParNs {
     }
   }
 
+  def par9[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6, T7, T8, T9]
+  (
+    fetchTally1: F[E, T1],
+    fetchTally2: F[E, T2],
+    fetchTally3: F[E, T3],
+    fetchTally4: F[E, T4],
+    fetchTally5: F[E, T5],
+    fetchTally6: F[E, T6],
+    fetchTally7: F[E, T7],
+    fetchTally8: F[E, T8],
+    fetchTally9: F[E, T9],
+  ): F[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9)] = {
+    val concurrentInstance = Concurrent[F]
+
+    concurrentInstance.map(
+      concurrentInstance.par(fetchTally1,
+        concurrentInstance.par(fetchTally2,
+          concurrentInstance.par(fetchTally3,
+            concurrentInstance.par(fetchTally4,
+              concurrentInstance.par(fetchTally5,
+                concurrentInstance.par(fetchTally6,
+                  concurrentInstance.par(fetchTally7,
+                    concurrentInstance.par(fetchTally8,
+                      fetchTally9))))))))) {
+      case
+        (tally1,
+        (tally2,
+        (tally3,
+        (tally4,
+        (tally5,
+        (tally6,
+        (tally7,
+        (tally8,
+        tally9)))))))) => (
+        tally1,
+        tally2,
+        tally3,
+        tally4,
+        tally5,
+        tally6,
+        tally7,
+        tally8,
+        tally9,
+      )
+    }
+  }
+
   def par8[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6, T7, T8]
   (
     fetchTally1: F[E, T1],
@@ -158,6 +205,45 @@ trait ConcurrentParNs {
     }
   }
 
+  def par7[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6, T7]
+  (
+    fetchTally1: F[E, T1],
+    fetchTally2: F[E, T2],
+    fetchTally3: F[E, T3],
+    fetchTally4: F[E, T4],
+    fetchTally5: F[E, T5],
+    fetchTally6: F[E, T6],
+    fetchTally7: F[E, T7],
+  ): F[E, (T1, T2, T3, T4, T5, T6, T7)] = {
+    val concurrentInstance = Concurrent[F]
+
+    concurrentInstance.map(
+      concurrentInstance.par(fetchTally1,
+        concurrentInstance.par(fetchTally2,
+          concurrentInstance.par(fetchTally3,
+            concurrentInstance.par(fetchTally4,
+              concurrentInstance.par(fetchTally5,
+                concurrentInstance.par(fetchTally6,
+                  fetchTally7))))))) {
+      case
+        (tally1,
+        (tally2,
+        (tally3,
+        (tally4,
+        (tally5,
+        (tally6,
+        tally7)))))) => (
+        tally1,
+        tally2,
+        tally3,
+        tally4,
+        tally5,
+        tally6,
+        tally7,
+      )
+    }
+  }
+
   def par6[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6]
   (
     fetchTally1: F[E, T1],
@@ -189,6 +275,37 @@ trait ConcurrentParNs {
         tally4,
         tally5,
         tally6,
+      )
+    }
+  }
+
+  def par5[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5]
+  (
+    fetchTally1: F[E, T1],
+    fetchTally2: F[E, T2],
+    fetchTally3: F[E, T3],
+    fetchTally4: F[E, T4],
+    fetchTally5: F[E, T5],
+  ): F[E, (T1, T2, T3, T4, T5)] = {
+    val concurrentInstance = Concurrent[F]
+
+    concurrentInstance.map(
+      concurrentInstance.par(fetchTally1,
+        concurrentInstance.par(fetchTally2,
+          concurrentInstance.par(fetchTally3,
+            concurrentInstance.par(fetchTally4,
+              fetchTally5))))) {
+      case
+        (tally1,
+        (tally2,
+        (tally3,
+        (tally4,
+        tally5)))) => (
+        tally1,
+        tally2,
+        tally3,
+        tally4,
+        tally5,
       )
     }
   }
