@@ -75,7 +75,16 @@ object ZioInstanceMixins {
       fea.ensuring(finalizer)
   }
 
-  trait ZioSync extends Sync[IO] { self: BME[IO] =>
+  trait ZioDie extends Die[IO] { self: BME[IO] =>
+    override def failUnchecked(t: Throwable): IO[Nothing, Nothing] = IO.die(t)
+
+    override def orDie[E, A](fea: IO[E, A])(implicit ev: E <:< Throwable): IO[Nothing, A] = fea.orDie
+
+    override def refineOrDie[E1, A, E2](fea: IO[E1, A])(refinePf: PartialFunction[E1, E2])(implicit ev: E1 <:< Throwable): IO[E2, A] = fea.refineOrDie(refinePf)
+  }
+
+  trait ZioSync extends Sync[IO] with ZioDie { self: BME[IO] =>
+
     override def suspend[E, A](effect: => IO[E, A]): IO[E, A] = IO.suspend(effect)
 
     override def sync[A](block: => A): IO[Nothing, A] =
@@ -163,7 +172,8 @@ object ZioInstanceImpls {
   class ZioBMonad extends ZioBFunctor with Mixins.ZioBMonad
   class ZioBME extends ZioBMonad with Mixins.ZioBME
   class ZioBracket extends ZioBME with Mixins.ZioBracket
-  class ZioSync extends ZioBME with Mixins.ZioSync
+  class ZioDie extends ZioBME with Mixins.ZioDie
+  class ZioSync extends ZioDie with Mixins.ZioSync
   class ZioAsync extends ZioSync with Mixins.ZioAsync
   class ZioConcurrent extends ZioAsync with Mixins.ZioConcurrent
 
@@ -192,6 +202,7 @@ trait ZioInstances extends ZioExtraEffectInstances {
   implicit val zioBfectBifunctorMonad: BifunctorMonad[IO] = new ZioBMonad
   implicit val zioBfectBME: BME[IO]                       = new ZioBME
   implicit val zioBfectBracket: Bracket[IO]               = new ZioBracket
+  implicit val zioBfectDie: Die[IO]                       = new ZioDie
   implicit val zioBfectSync: Sync[IO]                     = new ZioSync
   implicit val zioBfectAsync: Async[IO]                   = new ZioAsync
   implicit val zioBfectConcurrent: Concurrent[IO]         = new ZioConcurrent

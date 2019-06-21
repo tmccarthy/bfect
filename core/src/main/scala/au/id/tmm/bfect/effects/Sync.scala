@@ -15,24 +15,13 @@
   */
 package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.{BME, BifunctorMonadErrorStaticOps}
-
 import scala.util.control.NonFatal
 
-trait Sync[F[+_, +_]] extends BME[F] {
+trait Sync[F[+_, +_]] extends Die[F] {
 
   def suspend[E, A](effect: => F[E, A]): F[E, A]
 
   def failUnchecked(t: Throwable): F[Nothing, Nothing] = suspend(throw t)
-
-  def die(t: Throwable): F[Nothing, Nothing] = failUnchecked(t)
-
-  def orDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Nothing, A] = handleErrorWith[E, A, Nothing](fea)(die(_))
-
-  def refineOrDie[E1, A, E2](fea: F[E1, A])(refinePf: PartialFunction[E1, E2])(implicit ev: E1 <:< Throwable): F[E2, A] =
-    handleErrorWith[E1, A, E2](fea) {
-      e => refinePf.andThen(leftPure).applyOrElse(e, (t: E1) => die(t))
-    }
 
   def sync[A](block: => A): F[Nothing, A] = suspend(rightPure(block))
 
@@ -61,16 +50,11 @@ trait Sync[F[+_, +_]] extends BME[F] {
 object Sync extends SyncStaticOps {
   def apply[F[+_, +_] : Sync]: Sync[F] = implicitly[Sync[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit sync: Sync[F]) extends BME.Ops[F, E, A](fea) {
-    def orDie(implicit ev: E <:< Throwable): F[Nothing, A] = sync.orDie(fea)
-    def refineOrDie[E2](refinePf: PartialFunction[E, E2])(implicit ev: E <:< Throwable): F[E2, A] = sync.refineOrDie[E, A, E2](fea)(refinePf)
-  }
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit sync: Sync[F]) extends Die.Ops[F, E, A](fea)
 }
 
-trait SyncStaticOps extends BifunctorMonadErrorStaticOps {
+trait SyncStaticOps extends DieStaticOps {
   def suspend[F[+_, +_] : Sync, E, A](effect: => F[E, A]): F[E, A] = Sync[F].suspend(effect)
-  def failUnchecked[F[+_, +_] : Sync](t: Throwable): F[Nothing, Nothing] = Sync[F].failUnchecked(t)
-  def die[F[+_, +_] : Sync](t: Throwable): F[Nothing, Nothing] = Sync[F].die(t)
   def sync[F[+_, +_] : Sync, A](block: => A): F[Nothing, A] = Sync[F].sync(block)
   def effectTotal[F[+_, +_] : Sync, A](block: => A): F[Nothing, A] = Sync[F].effectTotal(block)
   def syncCatch[F[+_, +_] : Sync, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = Sync[F].syncCatch(block)(catchPf)
