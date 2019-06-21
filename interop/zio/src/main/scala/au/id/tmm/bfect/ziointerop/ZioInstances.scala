@@ -194,6 +194,7 @@ trait ZioExtraEffectInstances {
 
 }
 
+// TODO there are clashes here for bracket and BMonad
 trait ZioInstances extends ZioExtraEffectInstances {
 
   import ZioInstanceImpls._

@@ -25,8 +25,7 @@ trait Bracket[F[+_, +_]] extends BifunctorMonad[F] {
   /**
     * Returns a curried form of `bracketCase` which has better type inference.
     */
-  def bracketCase[R, E](acquire: F[E, R]): PartialCaseAcquire[F, R, E] =
-    new PartialCaseAcquire[F, R, E](this, acquire)
+  def bracketCase[R, E](acquire: F[E, R]): PartialCaseAcquire[F, R, E] = Bracket.bracketCase(acquire)
 
   def bracket[R, E, A](acquire: F[E, R], release: R => F[Nothing, _], use: R => F[E, A]): F[E, A] =
     bracketCase[R, E, A](acquire, { case (resource, exitCase) => release(resource) }, use)
@@ -34,8 +33,7 @@ trait Bracket[F[+_, +_]] extends BifunctorMonad[F] {
   /**
     * Returns a curried form of `bracket` which has better type inference
     */
-  def bracket[R, E](acquire: F[E, R]): PartialAcquire[F, R, E] =
-    new PartialAcquire[F, R, E](this, acquire)
+  def bracket[R, E](acquire: F[E, R]): PartialAcquire[F, R, E] = Bracket.bracket(acquire)
 
   def ensure[E, A](fea: F[E, A])(finalizer: F[Nothing, _]): F[E, A] =
     bracket[Unit, E, A](rightPure(()), _ => finalizer, _ => fea)
@@ -53,22 +51,26 @@ object Bracket extends BracketStaticOps {
     def ensureCase(finalizer: ExitCase[E, A] => F[Nothing, _]): F[E, A] = bracket.ensureCase(fea)(finalizer)
   }
 
-  final class PartialCaseAcquire[F[+_, +_], R, E] private[effects] (bracket: Bracket[F], acquire: F[E, R]) {
+  implicit class CloseableOps[F[+_, +_], E, R](acquire: F[E, R])(implicit bracket: Bracket[F], sync: Sync[F], e: R <:< AutoCloseable) {
+    def bracketCloseable[A](use: R => F[E, A]): F[E, A] = Bracket.bracketCloseable[F, R, E, A](acquire, use)
+  }
+
+  final class PartialCaseAcquire[F[+_, +_], R, E] private[effects] (acquire: F[E, R]) {
     def apply[A](release: (R, ExitCase[E, A]) => F[Nothing, _]): PartialCaseAcquireRelease[F, R, E, A] =
-      new PartialCaseAcquireRelease[F, R, E, A](bracket, acquire, release)
+      new PartialCaseAcquireRelease[F, R, E, A](acquire, release)
   }
 
-  final class PartialCaseAcquireRelease[F[+_, +_], R, E, A] private[effects] (bracket: Bracket[F], acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _]) {
-    def apply(use: R => F[E, A]): F[E, A] = bracket.bracketCase(acquire, release, use)
+  final class PartialCaseAcquireRelease[F[+_, +_], R, E, A] private[effects] (acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _]) {
+    def apply(use: R => F[E, A])(bracket: Bracket[F]): F[E, A] = bracket.bracketCase(acquire, release, use)
   }
 
-  final class PartialAcquire[F[+_, +_], R, E] private[effects] (bracket: Bracket[F], acquire: F[E, R]) {
+  final class PartialAcquire[F[+_, +_], R, E] private[effects] (acquire: F[E, R]) {
     def apply(release: R => F[Nothing, _]): PartialAcquireRelease[F, R, E] =
-      new PartialAcquireRelease[F, R, E](bracket, acquire, release)
+      new PartialAcquireRelease[F, R, E](acquire, release)
   }
 
-  final class PartialAcquireRelease[F[+_, +_], R, E] private[effects] (bracket: Bracket[F], acquire: F[E, R], release: R => F[Nothing, _]) {
-    def apply[A](use: R => F[E, A]): F[E, A] = bracket.bracket[R, E, A](acquire, release, use)
+  final class PartialAcquireRelease[F[+_, +_], R, E] private[effects] (acquire: F[E, R], release: R => F[Nothing, _]) {
+    def apply[A](use: R => F[E, A])(implicit bracket: Bracket[F]): F[E, A] = bracket.bracket[R, E, A](acquire, release, use)
   }
 
 }
@@ -77,10 +79,19 @@ trait BracketStaticOps extends BifunctorMonadStaticOps {
   def bracketCase[F[+_, +_] : Bracket, R, E, A](acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _], use: R => F[E, A]): F[E, A] = Bracket[F].bracketCase[R, E, A](acquire, release, use)
   def bracket[F[+_, +_] : Bracket, R, E, A](acquire: F[E, R], release: R => F[Nothing, _], use: R => F[E, A]): F[E, A] = Bracket[F].bracket[R, E, A](acquire, release, use)
 
-  def bracketCloseable[F[+_, +_] : Bracket : Sync, R <: AutoCloseable, E, A](acquire: F[E, R], use: R => F[E, A]): F[E, A] =
-    Bracket[F].bracket[R, E, A](acquire, r => Sync[F].sync(r.close()), use)
+  /**
+    * Returns a curried form of `bracketCase` which has better type inference.
+    */
+  def bracketCase[F[+_, +_], R, E](acquire: F[E, R]): PartialCaseAcquire[F, R, E] =
+    new PartialCaseAcquire[F, R, E](acquire)
 
-  def bracketCloseable[F[+_, +_] : Bracket : Sync, R <: AutoCloseable, E](acquire: F[E, R]): Bracket.PartialAcquireRelease[F, R, E] =
-    new Bracket.PartialAcquireRelease[F, R, E](Bracket[F], acquire, r => Sync[F].sync(r.close()))
+  /**
+    * Returns a curried form of `bracket` which has better type inference
+    */
+  def bracket[F[+_, +_], R, E](acquire: F[E, R]): PartialAcquire[F, R, E] =
+    new PartialAcquire[F, R, E](acquire)
+
+  def bracketCloseable[F[+_, +_] : Bracket : Sync, R, E, A](acquire: F[E, R], use: R => F[E, A])(implicit e: R <:< AutoCloseable): F[E, A] =
+    Bracket[F].bracket[R, E, A](acquire, r => Sync[F].sync(r.close()), use)
 
 }
