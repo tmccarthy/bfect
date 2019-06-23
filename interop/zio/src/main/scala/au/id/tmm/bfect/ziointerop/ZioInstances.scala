@@ -53,7 +53,7 @@ object ZioInstanceMixins {
     override def attempt[E, A](fea: IO[E, A]): IO[Nothing, Either[E, A]] = fea.either
   }
 
-  trait ZioBracket extends Bracket[IO] { self: BME[IO] =>
+  trait ZioBracket extends Bracket.WithBMonad[IO] { self: BME[IO] =>
 
     private def bfectExitCaseFrom[E, A](zioExit: zio.Exit[E, A]): ExitCase[E, A] = zioExit match {
       case Exit.Success(value) => ExitCase.Succeeded(value)
@@ -121,7 +121,7 @@ object ZioInstanceMixins {
     }
   }
 
-  trait ZioTimer extends Timer[IO] { self: BME[IO] =>
+  trait ZioTimer extends Timer.WithBMonad[IO] { self: BME[IO] =>
     private val clock = Clock.Live.clock
 
     override def sleep(duration: Duration): IO[Nothing, Unit] = clock.sleep(ZioDuration.fromNanos(duration.toNanos))

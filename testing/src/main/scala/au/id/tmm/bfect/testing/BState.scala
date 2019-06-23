@@ -19,7 +19,7 @@ import java.time.{Duration, Instant}
 
 import au.id.tmm.bfect.effects.extra.Resources
 import au.id.tmm.bfect.effects.{Async, Bracket, Concurrent, Timer}
-import au.id.tmm.bfect.{ExitCase, Failure, Fibre}
+import au.id.tmm.bfect.{BME, ExitCase, Failure, Fibre}
 
 import scala.util.Random
 
@@ -60,7 +60,29 @@ object BState {
 
   def leftPure[S, E](e: E): BState[S, E, Nothing] = BState(s => (s, Left(e)))
 
-  trait ConcurrentInstance[S] extends Concurrent[BState[S, +?, +?]] with Async[BState[S, +?, +?]] with Bracket[BState[S, +?, +?]] with Timer[BState[S, +?, +?]] {
+  trait BMEInstance[S] extends BME[BState[S, +?, +?]] {
+    override def rightPure[A](a: A): BState[S, Nothing, A] = BState.pure(a)
+
+    override def leftPure[E](e: E): BState[S, E, Nothing] = BState.leftPure(e)
+
+    override def flatMap[E1, E2 >: E1, A, B](fe1a: BState[S, E1, A])(fafe2b: A => BState[S, E2, B]): BState[S, E2, B] =
+      fe1a.flatMap(fafe2b)
+
+    override def tailRecM[E, A, A1](a: A)(f: A => BState[S, E, Either[A, A1]]): BState[S, E, A1] = f(a).flatMap {
+      case Right(value) => pure(value)
+      case Left(value) => tailRecM(value)(f)
+    }
+
+    override def biMap[L1, R1, L2, R2](f: BState[S, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): BState[S, L2, R2] =
+      f.biMap(leftF, rightF)
+  }
+
+  trait ConcurrentInstance[S]
+    extends BMEInstance[S]
+      with Concurrent.WithBMonad[BState[S, +?, +?]]
+      with Async[BState[S, +?, +?]]
+      with Bracket.WithBMonad[BState[S, +?, +?]]
+      with Timer.WithBMonad[BState[S, +?, +?]] {
 
     private def asFibre[E, A](fea: BState[S, E, A]): Fibre[BState[S, +?, +?], E, A] = new Fibre[BState[S, +?, +?], E, A] {
       override def cancel: BState[S, Nothing, Unit] = BState[S, Nothing, Unit](d => (d, Right(())))
@@ -129,21 +151,6 @@ object BState {
         }
       )
 
-    override def rightPure[A](a: A): BState[S, Nothing, A] = BState.pure(a)
-
-    override def leftPure[E](e: E): BState[S, E, Nothing] = BState.leftPure(e)
-
-    override def flatMap[E1, E2 >: E1, A, B](fe1a: BState[S, E1, A])(fafe2b: A => BState[S, E2, B]): BState[S, E2, B] =
-      fe1a.flatMap(fafe2b)
-
-    override def tailRecM[E, A, A1](a: A)(f: A => BState[S, E, Either[A, A1]]): BState[S, E, A1] = f(a).flatMap {
-      case Right(value) => pure(value)
-      case Left(value) => tailRecM(value)(f)
-    }
-
-    override def biMap[L1, R1, L2, R2](f: BState[S, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): BState[S, L2, R2] =
-      f.biMap(leftF, rightF)
-
     override def sleep(duration: Duration): BState[S, Nothing, Unit] =
       BState(state => (applySleepToState(duration, state), Right(())))
 
@@ -159,7 +166,7 @@ object BState {
     protected def applySleepToState(sleepDuration: Duration, state: S): S
   }
 
-  trait TimerInstance[S] extends ConcurrentInstance[S] with Timer[BState[S, +?, +?]] {
+  trait TimerInstance[S] extends ConcurrentInstance[S] with Timer.WithBMonad[BState[S, +?, +?]] {
     protected def nowFromState(state: S): (S, Instant)
 
     protected def applySleepToState(sleepDuration: Duration, state: S): S
@@ -186,7 +193,11 @@ object BState {
     override def applySleepToState(sleepDuration: Duration, state: S): S = state
   }
 
-  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]] =
-    new CompleteConcurrentInstance[S] {}
+  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]]
+    with Concurrent[BState[S, +?, +?]]
+    with Async[BState[S, +?, +?]]
+    with Bracket[BState[S, +?, +?]]
+    with Timer[BState[S, +?, +?]]
+    with Resources[BState[S, +?, +?]] = new CompleteConcurrentInstance[S] {}
 
 }

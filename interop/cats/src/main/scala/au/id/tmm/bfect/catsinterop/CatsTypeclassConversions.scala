@@ -75,10 +75,10 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
   }
 
   class CatsConcurrentForBfectConcurrent[F[+_, +_]](implicit bfectBracket: Bracket[F], bfectAsync: Async[F], bfectConcurrent: Concurrent[F]) extends CatsAsyncForBfectAsync with cats.effect.Concurrent[F[Throwable, +?]] {
-    override def start[A](fa: F[Throwable, A]): F[Throwable, cats.effect.Fiber[F[Throwable, +?], A]] = bfectConcurrent.map(bfectConcurrent.start(fa))(asCatsFiber)
+    override def start[A](fa: F[Throwable, A]): F[Throwable, cats.effect.Fiber[F[Throwable, +?], A]] = bfectAsync.map(bfectConcurrent.start(fa))(asCatsFiber)
 
     override def racePair[A, B](fa: F[Throwable, A], fb: F[Throwable, B]): F[Throwable, Either[(A, cats.effect.Fiber[F[Throwable, +?], B]), (cats.effect.Fiber[F[Throwable, +?], A], B)]] =
-      bfectConcurrent.map(bfectConcurrent.racePair(fa, fb)) {
+      bfectAsync.map(bfectConcurrent.racePair(fa, fb)) {
         case Left((a, bFiber))  => Left((a, asCatsFiber(bFiber)))
         case Right((aFiber, b)) => Right((asCatsFiber(aFiber), b))
       }
@@ -110,7 +110,7 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
     override def monotonic(unit: TimeUnit): F[Throwable, Long] = bfectNow.now.map(i => i.getEpochSecond * i.getNano)
   }
 
-  class CatsTimerForBfectTimer[F[+_, +_]](implicit bfectTimer: Timer[F]) extends CatsClockForBfectNow[F] with cats.effect.Timer[F[Throwable, +?]] {
+  class CatsTimerForBfectTimer[F[+_, +_]](implicit bfectTimer: Timer[F], bFunctor: BFunctor[F]) extends CatsClockForBfectNow[F] with cats.effect.Timer[F[Throwable, +?]] {
     override def clock: Clock[F[Throwable, +?]] = this
 
     override def sleep(duration: FiniteDuration): F[Throwable, Unit] = bfectTimer.sleep(duration)
@@ -130,7 +130,7 @@ trait BfectToCatsTypeclassConversions {
   implicit def bfectConcurrentIsCatsConcurrent[F[+_, +_] : Concurrent : Async : Bracket]: cats.effect.Concurrent[F[Throwable, +?]] = new CatsConcurrentForBfectConcurrent[F]()
 
   implicit def bfectNowIsCatsClock[F[+_, +_] : Now : BFunctor]: cats.effect.Clock[F[Throwable, +?]] = new CatsClockForBfectNow[F]()
-  implicit def bfectTimerIsCatsTimer[F[+_, +_] : Timer]: cats.effect.Timer[F[Throwable, +?]] = new CatsTimerForBfectTimer[F]()
+  implicit def bfectTimerIsCatsTimer[F[+_, +_] : Timer : BFunctor]: cats.effect.Timer[F[Throwable, +?]] = new CatsTimerForBfectTimer[F]()
 
 }
 

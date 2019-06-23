@@ -23,28 +23,13 @@ import au.id.tmm.bfect.effects.{Bracket, Sync}
 
 import scala.io.Source
 
-trait Resources[F[+_, +_]] extends Sync[F] with Bracket[F] {
+trait Resources[F[+_, +_]] {
 
   def getResourceAsStream(resourceName: String): F[Nothing, Option[InputStream]]
 
-  def useResourceAsStream[E, A](resourceName: String)(use: InputStream => F[E, A]): F[ResourceStreamError[E], A] =
-    bracket[InputStream, ResourceStreamError[E], A](
-      acquire = {
-        flatMap(getResourceAsStream(resourceName)) {
-          case Some(stream) => pure(stream): F[ResourceStreamError[E], InputStream]
-          case None         => leftPure(ResourceStreamError.ResourceNotFound): F[ResourceStreamError[E], InputStream]
-        }
-      },
-      release = stream => sync(stream.close()),
-      use = use.andThen(fea => leftMap(fea)(ResourceStreamError.UseError.apply)),
-    )
+  def useResourceAsStream[E, A](resourceName: String)(use: InputStream => F[E, A]): F[ResourceStreamError[E], A]
 
-  def resourceAsString(resourceName: String, charset: Charset = Charset.forName("UTF-8")): F[ResourceStreamError[IOException], String] =
-    useResourceAsStream(resourceName) { inputStream =>
-      syncCatch(Source.fromInputStream(inputStream, charset.toString).mkString) {
-        case e: IOException => e
-      }
-    }
+  def resourceAsString(resourceName: String, charset: Charset = Charset.forName("UTF-8")): F[ResourceStreamError[IOException], String]
 
 }
 
@@ -59,9 +44,28 @@ object Resources {
     final case class UseError[E](cause: E) extends ResourceStreamError[E]
   }
 
-  trait Live[F[+_, +_]] extends Resources[F] { self: Sync[F] =>
+  trait Live[F[+_, +_]] extends Resources[F] { self: Sync[F] with Bracket[F] =>
     override def getResourceAsStream(resourceName: String): F[Nothing, Option[InputStream]] =
       sync(Option(getClass.getResourceAsStream(resourceName)))
+
+    override def useResourceAsStream[E, A](resourceName: String)(use: InputStream => F[E, A]): F[ResourceStreamError[E], A] =
+      bracket[InputStream, ResourceStreamError[E], A](
+        acquire = {
+          flatMap(getResourceAsStream(resourceName)) {
+            case Some(stream) => pure(stream): F[ResourceStreamError[E], InputStream]
+            case None         => leftPure(ResourceStreamError.ResourceNotFound): F[ResourceStreamError[E], InputStream]
+          }
+        },
+        release = stream => sync(stream.close()),
+        use = use.andThen(fea => leftMap(fea)(ResourceStreamError.UseError.apply)),
+      )
+
+    override def resourceAsString(resourceName: String, charset: Charset = Charset.forName("UTF-8")): F[ResourceStreamError[IOException], String] =
+      useResourceAsStream(resourceName) { inputStream =>
+        syncCatch(Source.fromInputStream(inputStream, charset.toString).mkString) {
+          case e: IOException => e
+        }
+      }
   }
 
 }

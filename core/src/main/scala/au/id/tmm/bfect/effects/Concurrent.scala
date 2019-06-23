@@ -15,9 +15,9 @@
   */
 package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.{BifunctorMonad, BifunctorMonadStaticOps, Fibre}
+import au.id.tmm.bfect._
 
-trait Concurrent[F[+_, +_]] extends BifunctorMonad[F] {
+trait Concurrent[F[+_, +_]] {
 
   def start[E, A](fea: F[E, A]): F[Nothing, Fibre[F, E, A]]
 
@@ -25,20 +25,9 @@ trait Concurrent[F[+_, +_]] extends BifunctorMonad[F] {
 
   def racePair[E, A, B](fea: F[E, A], feb: F[E, B]): F[E, Either[(A, Fibre[F, E, B]), (Fibre[F, E, A], B)]]
 
-  def race[E, A, B](fea: F[E, A], feb: F[E, B]): F[E, Either[A, B]] =
-  /*_*/
-    flatMap(racePair(fea, feb)) {
-      case Left((a, fibreForB)) => map(fibreForB.cancel)(_ => Left(a))
-      case Right((fibreForA, b)) => map(fibreForA.cancel)(_ => Right(b))
-    }
-  /*_*/
+  def race[E, A, B](fea: F[E, A], feb: F[E, B]): F[E, Either[A, B]]
 
-  def par[E, A, B](fea: F[E, A], feb: F[E, B]): F[E, (A, B)] = {
-    flatMap(racePair(fea, feb)) {
-      case Left((a, bFibre)) => map(bFibre.join)(b => (a, b))
-      case Right((aFibre, b)) => map(aFibre.join)(a => (a, b))
-    }
-  }
+  def par[E, A, B](fea: F[E, A], feb: F[E, B]): F[E, (A, B)]
 
   def cancelable[E, A](k: (Either[E, A] => Unit) => F[Nothing, _]): F[E, A]
 
@@ -48,7 +37,24 @@ object Concurrent extends ConcurrentStaticOps with ConcurrentParNs {
 
   def apply[F[+_, +_] : Concurrent]: Concurrent[F] = implicitly[Concurrent[F]]
 
-  implicit class Ops[F[+_, +_], E, A](protected val fea: F[E, A])(implicit concurrent: Concurrent[F]) extends BifunctorMonad.Ops[F, E, A](fea) {
+  trait WithBMonad[F[+_, +_]] extends Concurrent[F] { self: BMonad[F] =>
+    override def race[E, A, B](fea: F[E, A], feb: F[E, B]): F[E, Either[A, B]] =
+    /*_*/
+      flatMap(racePair(fea, feb)) {
+        case Left((a, fibreForB))  => map(fibreForB.cancel)(_ => Left(a))
+        case Right((fibreForA, b)) => map(fibreForA.cancel)(_ => Right(b))
+      }
+    /*_*/
+
+    override def par[E, A, B](fea: F[E, A], feb: F[E, B]): F[E, (A, B)] = {
+      flatMap(racePair(fea, feb)) {
+        case Left((a, bFibre))  => map(bFibre.join)(b => (a, b))
+        case Right((aFibre, b)) => map(aFibre.join)(a => (a, b))
+      }
+    }
+  }
+
+  implicit class Ops[F[+_, +_], E, A](protected val fea: F[E, A])(implicit concurrent: Concurrent[F]) {
     def start: F[Nothing, Fibre[F, E, A]] = concurrent.start(fea)
     def fork: F[Nothing, Fibre[F, E, A]] = concurrent.fork(fea)
 
@@ -57,12 +63,12 @@ object Concurrent extends ConcurrentStaticOps with ConcurrentParNs {
 
 }
 
-trait ConcurrentStaticOps extends BifunctorMonadStaticOps {
+trait ConcurrentStaticOps {
   def race[F[+_, +_]: Concurrent, E, A, B](fea: F[E, A], feb: F[E, B]): F[E, Either[A, B]] = Concurrent[F].race(fea, feb)
 }
 
 trait ConcurrentParNs {
-  def par10[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]
+  def par10[F[+_, +_] : Concurrent : BFunctor, E, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
@@ -77,7 +83,7 @@ trait ConcurrentParNs {
   ): F[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         concurrentInstance.par(fetchTally2,
           concurrentInstance.par(fetchTally3,
@@ -114,7 +120,7 @@ trait ConcurrentParNs {
     }
   }
 
-  def par9[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6, T7, T8, T9]
+  def par9[F[+_, +_] : Concurrent : BFunctor, E, T1, T2, T3, T4, T5, T6, T7, T8, T9]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
@@ -128,7 +134,7 @@ trait ConcurrentParNs {
   ): F[E, (T1, T2, T3, T4, T5, T6, T7, T8, T9)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         concurrentInstance.par(fetchTally2,
           concurrentInstance.par(fetchTally3,
@@ -161,7 +167,7 @@ trait ConcurrentParNs {
     }
   }
 
-  def par8[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6, T7, T8]
+  def par8[F[+_, +_] : Concurrent : BFunctor, E, T1, T2, T3, T4, T5, T6, T7, T8]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
@@ -174,7 +180,7 @@ trait ConcurrentParNs {
   ): F[E, (T1, T2, T3, T4, T5, T6, T7, T8)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         concurrentInstance.par(fetchTally2,
           concurrentInstance.par(fetchTally3,
@@ -205,7 +211,7 @@ trait ConcurrentParNs {
     }
   }
 
-  def par7[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6, T7]
+  def par7[F[+_, +_] : Concurrent : BFunctor, E, T1, T2, T3, T4, T5, T6, T7]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
@@ -217,7 +223,7 @@ trait ConcurrentParNs {
   ): F[E, (T1, T2, T3, T4, T5, T6, T7)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         concurrentInstance.par(fetchTally2,
           concurrentInstance.par(fetchTally3,
@@ -244,7 +250,7 @@ trait ConcurrentParNs {
     }
   }
 
-  def par6[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5, T6]
+  def par6[F[+_, +_] : Concurrent : BFunctor, E, T1, T2, T3, T4, T5, T6]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
@@ -255,7 +261,7 @@ trait ConcurrentParNs {
   ): F[E, (T1, T2, T3, T4, T5, T6)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         concurrentInstance.par(fetchTally2,
           concurrentInstance.par(fetchTally3,
@@ -279,7 +285,7 @@ trait ConcurrentParNs {
     }
   }
 
-  def par5[F[+_, +_] : Concurrent, E, T1, T2, T3, T4, T5]
+  def par5[F[+_, +_] : Concurrent : BFunctor, E, T1, T2, T3, T4, T5]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
@@ -289,7 +295,7 @@ trait ConcurrentParNs {
   ): F[E, (T1, T2, T3, T4, T5)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         concurrentInstance.par(fetchTally2,
           concurrentInstance.par(fetchTally3,
@@ -310,7 +316,7 @@ trait ConcurrentParNs {
     }
   }
 
-  def par4[F[+_, +_] : Concurrent, E, T1, T2, T3, T4]
+  def par4[F[+_, +_] : Concurrent : BFunctor, E, T1, T2, T3, T4]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
@@ -319,7 +325,7 @@ trait ConcurrentParNs {
   ): F[E, (T1, T2, T3, T4)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         concurrentInstance.par(fetchTally2,
           concurrentInstance.par(fetchTally3,
@@ -337,7 +343,7 @@ trait ConcurrentParNs {
     }
   }
 
-  def par3[F[+_, +_] : Concurrent, E, T1, T2, T3]
+  def par3[F[+_, +_] : Concurrent : BFunctor, E, T1, T2, T3]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
@@ -345,7 +351,7 @@ trait ConcurrentParNs {
   ): F[E, (T1, T2, T3)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         concurrentInstance.par(fetchTally2,
           fetchTally3))) {
@@ -360,14 +366,14 @@ trait ConcurrentParNs {
     }
   }
 
-  def par2[F[+_, +_] : Concurrent, E, T1, T2]
+  def par2[F[+_, +_] : Concurrent : BFunctor, E, T1, T2]
   (
     fetchTally1: F[E, T1],
     fetchTally2: F[E, T2],
   ): F[E, (T1, T2)] = {
     val concurrentInstance = Concurrent[F]
 
-    concurrentInstance.map(
+    BFunctor[F].map(
       concurrentInstance.par(fetchTally1,
         fetchTally2)) {
       case

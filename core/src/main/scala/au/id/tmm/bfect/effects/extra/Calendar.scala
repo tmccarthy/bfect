@@ -17,28 +17,20 @@ package au.id.tmm.bfect.effects.extra
 
 import java.time._
 
-import au.id.tmm.bfect.BifunctorMonad
+import au.id.tmm.bfect.BMonad
 import au.id.tmm.bfect.effects.{Now, Sync}
 
-trait Calendar[F[+_, +_]] extends BifunctorMonad[F] with Now[F] {
+trait Calendar[F[+_, +_]] extends Now[F] {
 
   def localTimezone: F[Nothing, ZoneId]
 
   def nowInstant: F[Nothing, Instant] = now
 
-  def nowZonedDateTime: F[Nothing, ZonedDateTime] = flatMap(localTimezone) { tz =>
-    map(now) { now =>
-      now.atZone(tz)
-    }
-  }
-
-  def nowLocalDateTime: F[Nothing, LocalDateTime] = map(nowZonedDateTime)(_.toLocalDateTime)
-
-  def nowLocalDate: F[Nothing, LocalDate] = map(nowZonedDateTime)(_.toLocalDate)
-
-  def nowLocalTime: F[Nothing, LocalTime] = map(nowZonedDateTime)(_.toLocalTime)
-
-  def nowOffsetDateTime: F[Nothing, OffsetDateTime] = map(nowZonedDateTime)(_.toOffsetDateTime)
+  def nowZonedDateTime: F[Nothing, ZonedDateTime]
+  def nowLocalDateTime: F[Nothing, LocalDateTime]
+  def nowLocalDate: F[Nothing, LocalDate]
+  def nowLocalTime: F[Nothing, LocalTime]
+  def nowOffsetDateTime: F[Nothing, OffsetDateTime]
 
 }
 
@@ -46,7 +38,23 @@ object Calendar {
 
   def apply[F[+_, +_] : Calendar]: Calendar[F] = implicitly[Calendar[F]]
 
-  trait Live[F[+_, +_]] extends Calendar[F] { self: Sync[F] =>
+  trait WithBMonad[F[+_, +_]] extends Calendar[F] { self: BMonad[F] =>
+    override def nowZonedDateTime: F[Nothing, ZonedDateTime] = flatMap(localTimezone) { tz =>
+      map(now) { now =>
+        now.atZone(tz)
+      }
+    }
+
+    override def nowLocalDateTime: F[Nothing, LocalDateTime] = map(nowZonedDateTime)(_.toLocalDateTime)
+
+    override def nowLocalDate: F[Nothing, LocalDate] = map(nowZonedDateTime)(_.toLocalDate)
+
+    override def nowLocalTime: F[Nothing, LocalTime] = map(nowZonedDateTime)(_.toLocalTime)
+
+    override def nowOffsetDateTime: F[Nothing, OffsetDateTime] = map(nowZonedDateTime)(_.toOffsetDateTime)
+  }
+
+  trait Live[F[+_, +_]] extends Calendar.WithBMonad[F] { self: Sync[F] =>
     override def localTimezone: F[Nothing, ZoneId]             = sync(ZoneId.systemDefault())
     override def now: F[Nothing, Instant]                      = sync(Instant.now())
     override def nowInstant: F[Nothing, Instant]               = sync(Instant.now())
