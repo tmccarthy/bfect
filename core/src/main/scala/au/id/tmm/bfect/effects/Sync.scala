@@ -51,6 +51,11 @@ object Sync extends SyncStaticOps {
   def apply[F[+_, +_] : Sync]: Sync[F] = implicitly[Sync[F]]
 
   implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit sync: Sync[F]) extends Die.Ops[F, E, A](fea)
+
+  implicit class CloseableOps[F[+_, +_], E, R](acquire: F[E, R])(implicit sync: Sync[F], e: R <:< AutoCloseable) {
+    def bracketCloseable[E2 >: E, A](use: R => F[E2, A]): F[E2, A] = Sync.bracketCloseable[F, R, E, E2, A](acquire, use)
+  }
+
 }
 
 trait SyncStaticOps extends DieStaticOps {
@@ -60,4 +65,8 @@ trait SyncStaticOps extends DieStaticOps {
   def syncCatch[F[+_, +_] : Sync, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = Sync[F].syncCatch(block)(catchPf)
   def syncException[F[+_, +_] : Sync, A](block: => A): F[Exception, A] = Sync[F].syncException(block)
   def syncThrowable[F[+_, +_] : Sync, A](block: => A): F[Throwable, A] = Sync[F].syncThrowable(block)
+
+  def bracketCloseable[F[+_, +_] : Sync, R, E, E2 >: E, A](acquire: F[E, R], use: R => F[E2, A])(implicit e: R <:< AutoCloseable): F[E2, A] =
+    Bracket[F].bracket[R, E2, A](acquire, r => Sync[F].sync(r.close()), use)
+
 }

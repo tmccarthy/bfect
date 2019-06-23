@@ -102,7 +102,7 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
 
   final case class FailureInCancellationToken[E](e: E) extends Exception
 
-  class CatsClockForBfectNow[F[+_, _]](implicit bfectNow: Now[F], bFunctor: BFunctor[F]) extends cats.effect.Clock[F[Throwable, ?]] {
+  class CatsClockForBfectNow[F[+_, +_]](implicit bfectNow: Now[F], bFunctor: BFunctor[F]) extends cats.effect.Clock[F[Throwable, +?]] {
     import BFunctor.Ops
 
     override def realTime(unit: TimeUnit): F[Throwable, Long] = bfectNow.now.map(_.toEpochMilli)
@@ -129,7 +129,7 @@ trait BfectToCatsTypeclassConversions {
   implicit def bfectAsyncIsCatsAsync[F[+_, +_] : Async : Bracket]: cats.effect.Async[F[Throwable, +?]] = new CatsAsyncForBfectAsync[F]()
   implicit def bfectConcurrentIsCatsConcurrent[F[+_, +_] : Concurrent : Async : Bracket]: cats.effect.Concurrent[F[Throwable, +?]] = new CatsConcurrentForBfectConcurrent[F]()
 
-  implicit def bfectNowIsCatsClock[F[+_, _] : Now : BFunctor]: cats.effect.Clock[F[Throwable, ?]] = new CatsClockForBfectNow[F]()
+  implicit def bfectNowIsCatsClock[F[+_, +_] : Now : BFunctor]: cats.effect.Clock[F[Throwable, +?]] = new CatsClockForBfectNow[F]()
   implicit def bfectTimerIsCatsTimer[F[+_, +_] : Timer]: cats.effect.Timer[F[Throwable, +?]] = new CatsTimerForBfectTimer[F]()
 
 }

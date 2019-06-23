@@ -165,47 +165,22 @@ object ZioInstanceMixins {
 
 }
 
-object ZioInstanceImpls {
+trait ZioInstances {
   import ziointerop.{ZioInstanceMixins => Mixins}
 
-  class ZioBFunctor extends Mixins.ZioBifunctor
-  class ZioBMonad extends ZioBFunctor with Mixins.ZioBMonad
-  class ZioBME extends ZioBMonad with Mixins.ZioBME
-  class ZioBracket extends ZioBME with Mixins.ZioBracket
-  class ZioDie extends ZioBME with Mixins.ZioDie
-  class ZioSync extends ZioDie with Mixins.ZioSync
-  class ZioAsync extends ZioSync with Mixins.ZioAsync
-  class ZioConcurrent extends ZioAsync with Mixins.ZioConcurrent
-
-  class ZioCalendar extends ZioSync with Calendar.Live[IO]
-  class ZioConsole extends ZioSync with Console.Live[IO]
-  class ZioEnvVars extends ZioSync with EnvVars.Live[IO]
-  class ZioResources extends ZioSync with Mixins.ZioBracket with Resources.Live[IO]
-}
-
-trait ZioExtraEffectInstances {
-
-  import ZioInstanceImpls._
-
-  implicit val zioCalendar: Calendar[IO]   = new ZioCalendar
-  implicit val zioConsole: Console[IO]     = new ZioConsole
-  implicit val zioEnvVars: EnvVars[IO]     = new ZioEnvVars
-  implicit val zioResources: Resources[IO] = new ZioResources
-
-}
-
-// TODO there are clashes here for bracket and BMonad
-trait ZioInstances extends ZioExtraEffectInstances {
-
-  import ZioInstanceImpls._
-
-  implicit val zioBfectBifunctor: Bifunctor[IO]           = new ZioBFunctor
-  implicit val zioBfectBifunctorMonad: BifunctorMonad[IO] = new ZioBMonad
-  implicit val zioBfectBME: BME[IO]                       = new ZioBME
-  implicit val zioBfectBracket: Bracket[IO]               = new ZioBracket
-  implicit val zioBfectDie: Die[IO]                       = new ZioDie
-  implicit val zioBfectSync: Sync[IO]                     = new ZioSync
-  implicit val zioBfectAsync: Async[IO]                   = new ZioAsync
-  implicit val zioBfectConcurrent: Concurrent[IO]         = new ZioConcurrent
+  implicit val zioInstance: Mixins.ZioBifunctor with Mixins.ZioBMonad with Mixins.ZioBME with Mixins.ZioBracket with Mixins.ZioDie with Mixins.ZioSync with Mixins.ZioAsync with Mixins.ZioTimer with Mixins.ZioConcurrent with Calendar.Live[IO] with Console.Live[IO] with EnvVars.Live[IO] with Resources.Live[IO] =
+    new Mixins.ZioBifunctor
+      with Mixins.ZioBMonad
+      with Mixins.ZioBME
+      with Mixins.ZioBracket
+      with Mixins.ZioDie
+      with Mixins.ZioSync
+      with Mixins.ZioAsync
+      with Mixins.ZioTimer
+      with Mixins.ZioConcurrent
+      with Calendar.Live[IO]
+      with Console.Live[IO]
+      with EnvVars.Live[IO]
+      with Resources.Live[IO]
 
 }

@@ -61,7 +61,7 @@ object Timer extends TimerStaticOps {
 
   def apply[F[+_, +_] : Timer]: Timer[F] = implicitly[Timer[F]]
 
-  implicit class Ops[F[+_, +_], E, A](protected val fea: F[E, A])(implicit protected val timerInstance: Timer[F])
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit protected val timerInstance: Timer[F])
     extends BifunctorMonad.Ops[F, E, A](fea) {
 
     def repeatFixedDelay(delay: Duration): F[E, Nothing] = timerInstance.repeatFixedDelay(fea)(delay)

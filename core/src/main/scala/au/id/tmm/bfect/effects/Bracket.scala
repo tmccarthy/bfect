@@ -16,9 +16,9 @@
 package au.id.tmm.bfect.effects
 
 import au.id.tmm.bfect.effects.Bracket.{PartialAcquire, PartialCaseAcquire}
-import au.id.tmm.bfect.{BifunctorMonad, BifunctorMonadStaticOps, ExitCase}
+import au.id.tmm.bfect.{BME, BifunctorMonadErrorStaticOps, ExitCase}
 
-trait Bracket[F[+_, +_]] extends BifunctorMonad[F] {
+trait Bracket[F[+_, +_]] extends BME[F] {
 
   def bracketCase[R, E, A](acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _], use: R => F[E, A]): F[E, A]
 
@@ -46,13 +46,9 @@ trait Bracket[F[+_, +_]] extends BifunctorMonad[F] {
 object Bracket extends BracketStaticOps {
   def apply[F[+_, +_] : Bracket]: Bracket[F] = implicitly[Bracket[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) extends BifunctorMonad.Ops[F, E, A](fea) {
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) extends BME.Ops[F, E, A](fea) {
     def ensure(finalizer: F[Nothing, _]): F[E, A] = bracket.ensure(fea)(finalizer)
     def ensureCase(finalizer: ExitCase[E, A] => F[Nothing, _]): F[E, A] = bracket.ensureCase(fea)(finalizer)
-  }
-
-  implicit class CloseableOps[F[+_, +_], E, R](acquire: F[E, R])(implicit bracket: Bracket[F], sync: Sync[F], e: R <:< AutoCloseable) {
-    def bracketCloseable[A](use: R => F[E, A]): F[E, A] = Bracket.bracketCloseable[F, R, E, A](acquire, use)
   }
 
   final class PartialCaseAcquire[F[+_, +_], R, E] private[effects] (acquire: F[E, R]) {
@@ -75,7 +71,7 @@ object Bracket extends BracketStaticOps {
 
 }
 
-trait BracketStaticOps extends BifunctorMonadStaticOps {
+trait BracketStaticOps extends BifunctorMonadErrorStaticOps {
   def bracketCase[F[+_, +_] : Bracket, R, E, A](acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _], use: R => F[E, A]): F[E, A] = Bracket[F].bracketCase[R, E, A](acquire, release, use)
   def bracket[F[+_, +_] : Bracket, R, E, A](acquire: F[E, R], release: R => F[Nothing, _], use: R => F[E, A]): F[E, A] = Bracket[F].bracket[R, E, A](acquire, release, use)
 
@@ -90,8 +86,5 @@ trait BracketStaticOps extends BifunctorMonadStaticOps {
     */
   def bracket[F[+_, +_], R, E](acquire: F[E, R]): PartialAcquire[F, R, E] =
     new PartialAcquire[F, R, E](acquire)
-
-  def bracketCloseable[F[+_, +_] : Bracket : Sync, R, E, A](acquire: F[E, R], use: R => F[E, A])(implicit e: R <:< AutoCloseable): F[E, A] =
-    Bracket[F].bracket[R, E, A](acquire, r => Sync[F].sync(r.close()), use)
 
 }

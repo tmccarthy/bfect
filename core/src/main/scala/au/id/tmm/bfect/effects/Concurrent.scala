@@ -44,7 +44,7 @@ trait Concurrent[F[+_, +_]] extends BifunctorMonad[F] {
 
 }
 
-object Concurrent extends ConcurrentStaticOps {
+object Concurrent extends ConcurrentStaticOps with ConcurrentParNs {
 
   def apply[F[+_, +_] : Concurrent]: Concurrent[F] = implicitly[Concurrent[F]]
 

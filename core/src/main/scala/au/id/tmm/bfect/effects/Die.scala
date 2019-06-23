@@ -15,9 +15,7 @@
   */
 package au.id.tmm.bfect.effects
 
-import au.id.tmm.bfect.{BME, BifunctorMonadErrorStaticOps}
-
-trait Die[F[+_, +_]] extends BME[F] {
+trait Die[F[+_, +_]] extends Bracket[F] {
 
   def failUnchecked(t: Throwable): F[Nothing, Nothing]
 
@@ -30,18 +28,23 @@ trait Die[F[+_, +_]] extends BME[F] {
       e => refinePf.andThen(leftPure).applyOrElse(e, (t: E1) => die(t))
     }
 
+  def refineToExceptionOrDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Exception, A] = refineOrDie(fea) {
+    case e: Exception => e
+  }
+
 }
 
 object Die extends DieStaticOps {
   def apply[F[+_, +_] : Die]: Die[F] = implicitly[Die[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit sync: Die[F]) extends BME.Ops[F, E, A](fea) {
-    def orDie(implicit ev: E <:< Throwable): F[Nothing, A] = sync.orDie(fea)
-    def refineOrDie[E2](refinePf: PartialFunction[E, E2])(implicit ev: E <:< Throwable): F[E2, A] = sync.refineOrDie[E, A, E2](fea)(refinePf)
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit die: Die[F]) extends Bracket.Ops[F, E, A](fea) {
+    def orDie(implicit ev: E <:< Throwable): F[Nothing, A] = die.orDie(fea)
+    def refineOrDie[E2](refinePf: PartialFunction[E, E2])(implicit ev: E <:< Throwable): F[E2, A] = die.refineOrDie[E, A, E2](fea)(refinePf)
+    def refineToExceptionOrDie(implicit ev: E <:< Throwable): F[Exception, A] = die.refineToExceptionOrDie(fea)
   }
 }
 
-trait DieStaticOps extends BifunctorMonadErrorStaticOps {
+trait DieStaticOps extends BracketStaticOps {
   def failUnchecked[F[+_, +_] : Die](t: Throwable): F[Nothing, Nothing] = Die[F].failUnchecked(t)
   def die[F[+_, +_] : Die](t: Throwable): F[Nothing, Nothing] = Die[F].die(t)
 }

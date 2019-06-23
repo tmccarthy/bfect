@@ -13,22 +13,15 @@
   *    See the License for the specific language governing permissions and
   *    limitations under the License.
   */
-package au.id.tmm.bfect.effects
+package au.id.tmm.bfect
 
-import java.time.Instant
+import au.id.tmm.bfect.effects.Sync
 
-trait Now[F[+_, +_]] {
+package object fs2interop {
 
-  def now: F[Nothing, Instant]
+  type Fs2Compiler[F[+_, +_]] = fs2.Stream.Compiler[F[Throwable, +?], F[Throwable, +?]]
 
-}
+  implicit def fs2CompilerForBfect[F[+_, +_] : Sync]: Fs2Compiler[F] =
+    fs2.Stream.Compiler.syncInstance[F[Throwable, +?]](catsinterop.bfectSyncIsCatsSync)
 
-object Now extends NowStaticOps {
-
-  def apply[F[+_, +_] : Now]: Now[F] = implicitly[Now[F]]
-
-}
-
-trait NowStaticOps {
-  def now[F[+_, +_] : Now]: F[Nothing, Instant] = Now[F].now
 }
