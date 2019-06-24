@@ -60,6 +60,12 @@ object BState {
 
   def leftPure[S, E](e: E): BState[S, E, Nothing] = BState(s => (s, Left(e)))
 
+  def modify[S](f: S => S): BState[S, Nothing, Unit] = BState(s => (f(s), Right(())))
+
+  def inspect[S, E, A](f: S => Either[E, A]): BState[S, E, A] = BState(s => (s, f(s)))
+
+  def rightInspect[S, A](f: S => A): BState[S, Nothing, A] = inspect(f.andThen(Right.apply))
+
   trait BMEInstance[S] extends BME[BState[S, +?, +?]] {
     override def rightPure[A](a: A): BState[S, Nothing, A] = BState.pure(a)
 
