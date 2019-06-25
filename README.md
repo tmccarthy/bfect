@@ -10,6 +10,7 @@ A collection of bifunctor effect typeclasses, with instances for ZIO and convers
 * **`bfect-core`** - A collection of bifunctor effect typeclasses, based loosely around the structure of cats-effect
 * **`bfect-testing`** - An implementation of a bifunctor [state monad](https://typelevel.org/cats/datatypes/state.html) along with instances for the `bfect-core` typeclasses
 * **`bfect-interop-cats`** - Implicit conversions between the `bfect-core` typeclasses and their analogs in `cats-core` and `cats-effect`
+* **`bfect-interop-fs2`** - Utilities for interoperation with [`fs2`](https://github.com/functional-streams-for-scala/fs2/)
 * **`bfect-interop-zio`** - Instances of the `bfect-core` typeclasses for the [ZIO IO monad](https://github.com/zio/zio)
 * **`bfect-io`** - A half-finished bifunctor IO monad (don't use this)
 
@@ -21,20 +22,22 @@ Each of these are available through [Maven Central](https://repo.maven.apache.or
 
 Typeclass | Cats equivalent | Comment |
 ----------|-----------------|---------|
-[`Bifunctor`](core/src/main/scala/au/id/tmm/bfect/Bifunctor.scala) | `cats.Functor`/`cats.Bifunctor` | Functor with `biMap` and its derivations (`map`/`rightMap`, `leftMap`) |
-[`BifunctorMonad`](core/src/main/scala/au/id/tmm/bfect/BifunctorMonad.scala) | `cats.Monad` | Monad. Adds `flatMap`, `rightPure` and `leftPure`. |
-[`BifunctorMonadError`](core/src/main/scala/au/id/tmm/bfect/BifunctorMonadError.scala) | `cats.MonadError` | Represents the ability to handle errors with `handleErrorWith`. Comes with the alias `BME`. |
+[`Bifunctor`](core/src/main/scala/au/id/tmm/bfect/Bifunctor.scala) (`BFunctor`) | `cats.Functor`/`cats.Bifunctor` | Functor with `biMap` and its derivations (`map`/`rightMap`, `leftMap`) |
+[`BifunctorMonad`](core/src/main/scala/au/id/tmm/bfect/BifunctorMonad.scala) (`BMonad`) | `cats.Monad` | Monad. Adds `flatMap`, `rightPure` and `leftPure`. |
+[`BifunctorMonadError`](core/src/main/scala/au/id/tmm/bfect/BifunctorMonadError.scala) (`BME`) | `cats.MonadError` | Represents the ability to handle errors with `handleErrorWith`. Comes with the alias `BME`. |
 [`effects.Bracket`](core/src/main/scala/au/id/tmm/bfect/effects/Bracket.scala) | `cats.effect.Bracket` | Bracket. Represents the pure equivalent of `try`/`finally` |
 [`effects.Now`](core/src/main/scala/au/id/tmm/bfect/effects/Now.scala) | `cats.effect.Timer` | Represents the ability to create a timestamp |
 [`effects.Timer`](core/src/main/scala/au/id/tmm/bfect/effects/Timer.scala) | `cats.effect.Timer` | Extends `Now` with the ability to delay execution for a period of time |
-[`effects.Sync`](core/src/main/scala/au/id/tmm/bfect/effects/Sync.scala) | `cats.effect.Sync` | Extends `Bracket` with the ability to represent synchronous effects |
+[`effects.Die`](core/src/main/scala/au/id/tmm/bfect/effects/Die.scala) | | Extends `BifunctorMonadError` with the ability to suspend an effect that fails in an unchecked manner |
+[`effects.Sync`](core/src/main/scala/au/id/tmm/bfect/effects/Sync.scala) | `cats.effect.Sync` | Extends `Die` with the ability to suspend arbitrary synchronous effects |
 [`effects.Async`](core/src/main/scala/au/id/tmm/bfect/effects/Async.scala) | `cats.effect.Async` | Extends `Sync` with the ability to register asynchronous effects |
-[`effects.Concurrent`](core/src/main/scala/au/id/tmm/bfect/effects/Concurrent.scala) | `cats.effect.Concurrent` | Extends `Async` with the ability to start and cancel tasks |
+[`effects.Concurrent`](core/src/main/scala/au/id/tmm/bfect/effects/Concurrent.scala) | `cats.effect.Concurrent` | Represents the effect of starting and cancelling tasks |
 [`effects.extra.Console`](core/src/main/scala/au/id/tmm/bfect/effects/extra/Console.scala) | | Represents the effect of writing to the console |
 [`effects.extra.EnvVars`](core/src/main/scala/au/id/tmm/bfect/effects/extra/EnvVars.scala) | | Represents the effect of accessing environment variables |
 [`effects.extra.Resources`](core/src/main/scala/au/id/tmm/bfect/effects/extra/Resources.scala) | | Represents the effect of accessing Java resources |
 [`effects.extra.Calendar`](core/src/main/scala/au/id/tmm/bfect/effects/extra/Calendar.scala) | | Extends `Now` with the ability to determine the system timezone, enabling computation of the local date and so on. |
 
+Note that unlike in cats, `Bracket` and `Concurrent` are not part of the main inheritance chain that includes `Sync` and `Async`
 
 ## Usage
 
