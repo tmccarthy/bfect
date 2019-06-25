@@ -27,13 +27,7 @@ trait Sync[F[+_, +_]] extends Die[F] {
 
   def effectTotal[A](block: => A): F[Nothing, A] = sync(block)
 
-  def syncCatch[E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = suspend {
-    try {
-      rightPure(block): F[E, A]
-    } catch {
-      catchPf.andThen(leftPure(_): F[E, A])
-    }
-  }
+  def syncCatch[E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = suspend(pureCatch(block)(catchPf))
 
   def syncException[A](block: => A): F[Exception, A] =
     syncCatch(block) {

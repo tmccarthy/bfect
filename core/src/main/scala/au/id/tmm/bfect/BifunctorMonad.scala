@@ -42,6 +42,21 @@ trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
     case scala.util.Failure(e) => leftPure(e)
   }
 
+  def pureCatch[E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] =
+    try {
+      rightPure(block): F[E, A]
+    } catch {
+      catchPf.andThen(leftPure(_): F[E, A])
+    }
+
+  def pureCatchException[A](block: => A): F[Exception, A] = pureCatch(block) {
+    case e: Exception => e
+  }
+
+  def pureCatchThrowable[A](block: => A): F[Throwable, A] = pureCatch(block) {
+    case t: Throwable => t
+  }
+
   def flatten[E1, E2 >: E1, A](fefa: F[E1, F[E2, A]]): F[E2, A] = flatMap[E1, E2, F[E2, A], A](fefa)(identity)
 
   def flatMap[E1, E2 >: E1, A, B](fe1a: F[E1, A])(fafe2b: A => F[E2, B]): F[E2, B]
@@ -79,5 +94,9 @@ trait BifunctorMonadStaticOps {
   def fromEither[F[+_, +_] : BifunctorMonad, E, A](either: Either[E, A]): F[E, A] = BifunctorMonad[F].fromEither(either)
   def fromOption[F[+_, +_] : BifunctorMonad, E, A](option: Option[A], ifNone: => E): F[E, A] = BifunctorMonad[F].fromOption(option, ifNone)
   def fromTry[F[+_, +_] : BifunctorMonad, A](aTry: Try[A]): F[Throwable, A] = BifunctorMonad[F].fromTry(aTry)
+  def pureCatch[F[+_, +_] : BifunctorMonad, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = BifunctorMonad[F].pureCatch(block)(catchPf)
+  def pureCatchException[F[+_, +_] : BifunctorMonad, A](block: => A): F[Exception, A] = BifunctorMonad[F].pureCatchException(block)
+  def pureCatchThrowable[F[+_, +_] : BifunctorMonad, A](block: => A): F[Throwable, A] = BifunctorMonad[F].pureCatchThrowable(block)
+
   def unit[F[+_, +_] : BifunctorMonad]: F[Nothing, Unit] = BifunctorMonad[F].unit
 }
