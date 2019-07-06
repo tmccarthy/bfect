@@ -52,9 +52,21 @@ final case class BState[S, +E, +A](run: S => (S, Either[E, A])) {
 
   def runEither(s0: S): Either[E, A] = run(s0) match { case (_, either) => either }
 
+  def runUnsafe(s0: S): A = runEither(s0) match {
+    case Right(a)           => a
+    case Left(t: Throwable) => throw t
+    case Left(e)            => throw new Exception(s"Run failed due to $e")
+  }
+
+  def statelessRun(implicit ev: Unit =:= S): Either[E, A] = run(())._2
+
+  def statelessRunUnsafe(implicit ev: Unit =:= S): A = runUnsafe(())
+
 }
 
 object BState {
+
+  type Stateless[+E, +A] = BState[Unit, E, A]
 
   def pure[S, A](a: A): BState[S, Nothing, A] = BState(s => (s, Right(a)))
 
