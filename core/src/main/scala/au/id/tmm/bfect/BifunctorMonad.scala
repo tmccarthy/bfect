@@ -70,6 +70,10 @@ trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
 
   def unit[E, A](fea: F[E, A]): F[E, Unit] = flatMap(fea)(_ => unit)
 
+  def absolve[E, A](fEitherEA: F[E, Either[E, A]]): F[E, A] = flatMap(fEitherEA)(fromEither)
+
+  def absolveOption[E, A](feOptionA: F[E, Option[A]], ifNone: => E): F[E, A] = flatMap(feOptionA)(fromOption(_, ifNone))
+
 }
 
 object BifunctorMonad extends BifunctorMonadStaticOps {
@@ -83,6 +87,14 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
 
   implicit class FlattenOps[F[+_, +_], E1, E2 >: E1, A](fefea: F[E1, F[E2, A]])(implicit bifunctorMonad: BifunctorMonad[F]) {
     def flatten: F[E2, A] = bifunctorMonad.flatten[E1, E2, A](fefea)
+  }
+
+  implicit class AbsolveOps[F[+_, +_], E, A](fEitherEA: F[E, Either[E, A]])(implicit bMonad: BMonad[F]) {
+    def absolve: F[E, A] = bMonad.absolve(fEitherEA)
+  }
+
+  implicit class AbsolveOptionOps[F[+_, +_], E, A](feOptionA: F[E, Option[A]])(implicit bMonad: BMonad[F]) {
+    def absolveOption[E2 >: E](ifNone: => E2): F[E2, A] = bMonad.absolveOption(feOptionA, ifNone)
   }
 
 }

@@ -39,8 +39,6 @@ trait BifunctorMonadError[F[+_, +_]] extends BifunctorMonad[F] {
       rightPure(Left(e): Either[E, A])
     }
 
-  def absolve[E, A](fEitherEA: F[E, Either[E, A]]): F[E, A] = flatMap(fEitherEA)(BME.fromEither(_)(this))
-
 }
 
 object BifunctorMonadError extends BifunctorMonadErrorStaticOps {
@@ -52,10 +50,6 @@ object BifunctorMonadError extends BifunctorMonadErrorStaticOps {
     def handleErrorWith[E2 >: E](f: E => F[E2, A]): F[E2, A] = bme.handleErrorWith[E, A, E2](fea)(f)
     def recoverWith[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A] = bme.recoverWith[E, A, E2](fea)(catchPf)
     def catchLeft[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A] = bme.catchLeft[E, A, E2](fea)(catchPf)
-  }
-
-  implicit class AbsolveOps[F[+_, +_], E, A](fEitherEA: F[E, Either[E, A]])(implicit bme: BME[F]) {
-    def absolve: F[E, A] = bme.absolve(fEitherEA)
   }
 
 }
