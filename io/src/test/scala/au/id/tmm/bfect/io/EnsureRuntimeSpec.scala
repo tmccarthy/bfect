@@ -17,9 +17,9 @@ package au.id.tmm.bfect.io
 
 import au.id.tmm.bfect.ExitCase.{Failed, Succeeded}
 import au.id.tmm.bfect.Failure
-import au.id.tmm.utilities.testing.ImprovedFlatSpec
+import org.scalatest.FlatSpec
 
-class EnsureRuntimeSpec extends ImprovedFlatSpec {
+class EnsureRuntimeSpec extends FlatSpec {
 
   private val runtime = IORuntime()
 
@@ -38,7 +38,7 @@ class EnsureRuntimeSpec extends ImprovedFlatSpec {
   it should "ensure the execution of the finalizer after a failed IO" in {
     var finalizerHasRun = false
 
-    val io = IO.leftPure(Unit).ensure(IO.sync { finalizerHasRun = true })
+    val io = IO.leftPure(()).ensure(IO.sync { finalizerHasRun = true })
 
     runtime.run(io)
 

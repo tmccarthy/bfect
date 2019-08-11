@@ -1,8 +1,6 @@
 import DependencySettings._
 
-addCompilerPlugin("org.typelevel" % "kind-projector" % "0.10.3" cross CrossVersion.binary)
-
-val settingsHelper = ProjectSettingsHelper("au.id.tmm","intime")()
+val settingsHelper = ProjectSettingsHelper("au.id.tmm","bfect")()
 
 settingsHelper.settingsForBuild
 

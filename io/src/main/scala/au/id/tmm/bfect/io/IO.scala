@@ -72,7 +72,7 @@ object IO {
 
   def pure[A](a: A): IO[Nothing, A] = Pure(a)
 
-  val unit: IO[Nothing, Unit] = pure(Unit)
+  val unit: IO[Nothing, Unit] = pure(())
 
   def leftPure[E](e: E): IO[E, Nothing] = Fail(Failure.Checked(e))
 

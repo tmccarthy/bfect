@@ -25,9 +25,10 @@ trait Die[F[+_, +_]] extends BME[F] {
 
   def orDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Nothing, A] = handleErrorWith[E, A, Nothing](fea)(die(_))
 
+  //noinspection ConvertibleToMethodValue
   def refineOrDie[E1, A, E2](fea: F[E1, A])(refinePf: PartialFunction[E1, E2])(implicit ev: E1 <:< Throwable): F[E2, A] =
     handleErrorWith[E1, A, E2](fea) {
-      e => refinePf.andThen(leftPure).applyOrElse(e, (t: E1) => die(t))
+      e => refinePf.andThen(leftPure(_)).applyOrElse(e, (t: E1) => die(t))
     }
 
   def refineToExceptionOrDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Exception, A] = refineOrDie(fea) {
