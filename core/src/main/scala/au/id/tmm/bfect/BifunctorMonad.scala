@@ -79,13 +79,18 @@ trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
 object BifunctorMonad extends BifunctorMonadStaticOps {
   def apply[F[+_, +_] : BifunctorMonad]: BifunctorMonad[F] = implicitly[BifunctorMonad[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F]) extends Bifunctor.Ops[F, E, A](fea)(bifunctorMonad) {
+  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F])
+      extends Bifunctor.Ops[F, E, A](fea)(bifunctorMonad) {
     def flatMap[E2 >: E, B](f: A => F[E2, B]): F[E2, B] = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
-    def forever: F[E, Nothing] = bifunctorMonad.forever(fea)
-    def unit: F[E, Unit] = bifunctorMonad.unit(fea)
+    def forever: F[E, Nothing]                          = bifunctorMonad.forever(fea)
+    def unit: F[E, Unit]                                = bifunctorMonad.unit(fea)
   }
 
-  implicit class FlattenOps[F[+_, +_], E1, E2 >: E1, A](fefea: F[E1, F[E2, A]])(implicit bifunctorMonad: BifunctorMonad[F]) {
+  implicit class FlattenOps[F[+_, +_], E1, E2 >: E1, A](
+    fefea: F[E1, F[E2, A]],
+  )(implicit
+    bifunctorMonad: BifunctorMonad[F],
+  ) {
     def flatten: F[E2, A] = bifunctorMonad.flatten[E1, E2, A](fefea)
   }
 
@@ -100,15 +105,19 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
 }
 
 trait BifunctorMonadStaticOps {
-  def rightPure[F[+_, +_] : BifunctorMonad, A](a: A): F[Nothing, A] = BifunctorMonad[F].rightPure(a)
-  def pure[F[+_, +_] : BifunctorMonad, A](a: A): F[Nothing, A] = BifunctorMonad[F].pure(a)
-  def leftPure[F[+_, +_] : BifunctorMonad, E](e: E): F[E, Nothing] = BifunctorMonad[F].leftPure(e)
+  def rightPure[F[+_, +_] : BifunctorMonad, A](a: A): F[Nothing, A]               = BifunctorMonad[F].rightPure(a)
+  def pure[F[+_, +_] : BifunctorMonad, A](a: A): F[Nothing, A]                    = BifunctorMonad[F].pure(a)
+  def leftPure[F[+_, +_] : BifunctorMonad, E](e: E): F[E, Nothing]                = BifunctorMonad[F].leftPure(e)
   def fromEither[F[+_, +_] : BifunctorMonad, E, A](either: Either[E, A]): F[E, A] = BifunctorMonad[F].fromEither(either)
-  def fromOption[F[+_, +_] : BifunctorMonad, E, A](option: Option[A], ifNone: => E): F[E, A] = BifunctorMonad[F].fromOption(option, ifNone)
+  def fromOption[F[+_, +_] : BifunctorMonad, E, A](option: Option[A], ifNone: => E): F[E, A] =
+    BifunctorMonad[F].fromOption(option, ifNone)
   def fromTry[F[+_, +_] : BifunctorMonad, A](aTry: Try[A]): F[Throwable, A] = BifunctorMonad[F].fromTry(aTry)
-  def pureCatch[F[+_, +_] : BifunctorMonad, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = BifunctorMonad[F].pureCatch(block)(catchPf)
-  def pureCatchException[F[+_, +_] : BifunctorMonad, A](block: => A): F[Exception, A] = BifunctorMonad[F].pureCatchException(block)
-  def pureCatchThrowable[F[+_, +_] : BifunctorMonad, A](block: => A): F[Throwable, A] = BifunctorMonad[F].pureCatchThrowable(block)
+  def pureCatch[F[+_, +_] : BifunctorMonad, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] =
+    BifunctorMonad[F].pureCatch(block)(catchPf)
+  def pureCatchException[F[+_, +_] : BifunctorMonad, A](block: => A): F[Exception, A] =
+    BifunctorMonad[F].pureCatchException(block)
+  def pureCatchThrowable[F[+_, +_] : BifunctorMonad, A](block: => A): F[Throwable, A] =
+    BifunctorMonad[F].pureCatchThrowable(block)
 
   def unit[F[+_, +_] : BifunctorMonad]: F[Nothing, Unit] = BifunctorMonad[F].unit
 }

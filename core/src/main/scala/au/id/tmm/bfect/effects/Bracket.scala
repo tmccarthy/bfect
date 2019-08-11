@@ -20,14 +20,22 @@ import au.id.tmm.bfect.{BMonad, ExitCase}
 
 trait Bracket[F[+_, +_]] {
 
-  def bracketCase[R, E, A](acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _], use: R => F[E, A]): F[E, A]
+  def bracketCase[R, E, A](
+    acquire: F[E, R],
+    release: (R, ExitCase[E, A]) => F[Nothing, _],
+    use: R => F[E, A],
+  ): F[E, A]
 
   /**
     * Returns a curried form of `bracketCase` which has better type inference.
     */
   def bracketCase[R, E](acquire: F[E, R]): PartialCaseAcquire[F, R, E] = Bracket.bracketCase(acquire)
 
-  def bracket[R, E, A](acquire: F[E, R], release: R => F[Nothing, _], use: R => F[E, A]): F[E, A] =
+  def bracket[R, E, A](
+    acquire: F[E, R],
+    release: R => F[Nothing, _],
+    use: R => F[E, A],
+  ): F[E, A] =
     bracketCase[R, E, A](acquire, { case (resource, exitCase) => release(resource) }, use)
 
   /**
@@ -53,7 +61,7 @@ object Bracket extends BracketStaticOps {
   }
 
   implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) {
-    def ensure(finalizer: F[Nothing, _]): F[E, A] = bracket.ensure(fea)(finalizer)
+    def ensure(finalizer: F[Nothing, _]): F[E, A]                       = bracket.ensure(fea)(finalizer)
     def ensureCase(finalizer: ExitCase[E, A] => F[Nothing, _]): F[E, A] = bracket.ensureCase(fea)(finalizer)
   }
 
@@ -62,7 +70,10 @@ object Bracket extends BracketStaticOps {
       new PartialCaseAcquireRelease[F, R, E, A](acquire, release)
   }
 
-  final class PartialCaseAcquireRelease[F[+_, +_], R, E, A] private[effects] (acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _]) {
+  final class PartialCaseAcquireRelease[F[+_, +_], R, E, A] private[effects] (
+    acquire: F[E, R],
+    release: (R, ExitCase[E, A]) => F[Nothing, _],
+  ) {
     def apply(use: R => F[E, A])(bracket: Bracket[F]): F[E, A] = bracket.bracketCase(acquire, release, use)
   }
 
@@ -72,15 +83,25 @@ object Bracket extends BracketStaticOps {
   }
 
   final class PartialAcquireRelease[F[+_, +_], R, E] private[effects] (acquire: F[E, R], release: R => F[Nothing, _]) {
-    def apply[A](use: R => F[E, A])(implicit bracket: Bracket[F]): F[E, A] = bracket.bracket[R, E, A](acquire, release, use)
+    def apply[A](use: R => F[E, A])(implicit bracket: Bracket[F]): F[E, A] =
+      bracket.bracket[R, E, A](acquire, release, use)
   }
 
 }
 
 trait BracketStaticOps {
 
-  def bracketCase[F[+_, +_] : Bracket, R, E, A](acquire: F[E, R], release: (R, ExitCase[E, A]) => F[Nothing, _], use: R => F[E, A]): F[E, A] = Bracket[F].bracketCase[R, E, A](acquire, release, use)
-  def bracket[F[+_, +_] : Bracket, R, E, A](acquire: F[E, R], release: R => F[Nothing, _], use: R => F[E, A]): F[E, A] = Bracket[F].bracket[R, E, A](acquire, release, use)
+  def bracketCase[F[+_, +_] : Bracket, R, E, A](
+    acquire: F[E, R],
+    release: (R, ExitCase[E, A]) => F[Nothing, _],
+    use: R => F[E, A],
+  ): F[E, A] = Bracket[F].bracketCase[R, E, A](acquire, release, use)
+
+  def bracket[F[+_, +_] : Bracket, R, E, A](
+    acquire: F[E, R],
+    release: R => F[Nothing, _],
+    use: R => F[E, A],
+  ): F[E, A] = Bracket[F].bracket[R, E, A](acquire, release, use)
 
   /**
     * Returns a curried form of `bracketCase` which has better type inference.

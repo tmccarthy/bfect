@@ -40,7 +40,7 @@ object Async extends AsyncStaticOps {
 }
 
 trait AsyncStaticOps extends SyncStaticOps {
-  def async[F[+_, +_] : Async, E, A](k: (Either[E, A] => Unit) => Unit): F[E, A] = Async[F].async(k)
+  def async[F[+_, +_] : Async, E, A](k: (Either[E, A] => Unit) => Unit): F[E, A]           = Async[F].async(k)
   def asyncF[F[+_, +_] : Async, E, A](k: (Either[E, A] => Unit) => F[Nothing, _]): F[E, A] = Async[F].asyncF(k)
-  def never[F[+_, +_] : Async]: F[Nothing, Nothing] = Async[F].never
+  def never[F[+_, +_] : Async]: F[Nothing, Nothing]                                        = Async[F].never
 }

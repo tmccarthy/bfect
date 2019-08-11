@@ -54,8 +54,8 @@ object Timer extends TimerStaticOps {
     override def repeatFixedRate[E](fea: F[E, _])(period: Duration): F[E, Nothing] = {
       def repeatFixedRateStartingAt(t0: Long, period: Long): F[E, Nothing] = flatMap(fea) { _ =>
         flatMap(now) { instantCompleted =>
-          val tCompleted = instantCompleted.toEpochMilli
-          val nextStart = Instant.ofEpochMilli(    (period - ((tCompleted - t0) % period)) + tCompleted      )
+          val tCompleted    = instantCompleted.toEpochMilli
+          val nextStart     = Instant.ofEpochMilli((period - ((tCompleted - t0) % period)) + tCompleted)
           val sleepDuration = Duration.between(instantCompleted, nextStart)
           flatMap(sleep(sleepDuration)) { _ =>
             repeatFixedRateStartingAt(t0, period)
@@ -71,20 +71,23 @@ object Timer extends TimerStaticOps {
 
   implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit timerInstance: Timer[F]) {
     def repeatFixedDelay(delay: Duration): F[E, Nothing] = timerInstance.repeatFixedDelay(fea)(delay)
-    def repeatFixedDelay(delayAsScalaDuration: ScalaDuration): F[E, Nothing] = timerInstance.repeatFixedDelay(fea, delayAsScalaDuration)
+    def repeatFixedDelay(delayAsScalaDuration: ScalaDuration): F[E, Nothing] =
+      timerInstance.repeatFixedDelay(fea, delayAsScalaDuration)
     def repeatFixedRate(period: Duration): F[E, Nothing] = timerInstance.repeatFixedRate(fea)(period)
-    def repeatFixedRate(periodAsScalaDuration: ScalaDuration): F[E, Nothing] = timerInstance.repeatFixedRate(fea, periodAsScalaDuration)
+    def repeatFixedRate(periodAsScalaDuration: ScalaDuration): F[E, Nothing] =
+      timerInstance.repeatFixedRate(fea, periodAsScalaDuration)
   }
 
-  private[effects] def convertScalaDurationToJavaDuration(scalaDuration: ScalaDuration): Duration = scalaDuration match {
-    case ScalaDuration.MinusInf => Duration.ofSeconds(Long.MinValue, 0)
-    case _: ScalaDuration.Infinite => Duration.ofSeconds(Long.MaxValue, 999999999)
-    case finiteDuration: FiniteScalaDuration => Duration.ofNanos(finiteDuration.toNanos)
-  }
+  private[effects] def convertScalaDurationToJavaDuration(scalaDuration: ScalaDuration): Duration =
+    scalaDuration match {
+      case ScalaDuration.MinusInf              => Duration.ofSeconds(Long.MinValue, 0)
+      case _: ScalaDuration.Infinite           => Duration.ofSeconds(Long.MaxValue, 999999999)
+      case finiteDuration: FiniteScalaDuration => Duration.ofNanos(finiteDuration.toNanos)
+    }
 
 }
 
 trait TimerStaticOps extends NowStaticOps {
-  def sleep[F[+_, +_] : Timer](duration: Duration): F[Nothing, Unit] = Timer[F].sleep(duration)
+  def sleep[F[+_, +_] : Timer](duration: Duration): F[Nothing, Unit]           = Timer[F].sleep(duration)
   def sleep[F[+_, +_] : Timer](scalaDuration: ScalaDuration): F[Nothing, Unit] = Timer[F].sleep(scalaDuration)
 }

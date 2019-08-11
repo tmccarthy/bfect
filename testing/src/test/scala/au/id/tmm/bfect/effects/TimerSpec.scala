@@ -149,7 +149,7 @@ object TimerSpec {
 
   private final case class TimerTestState(now: Instant, taskExecutionTimes: List[Instant] = List.empty) {
     def proceedBy(duration: Duration): TimerTestState = TimerTestState(now.plus(duration), taskExecutionTimes)
-    def executeTask: TimerTestState = TimerTestState(now, taskExecutionTimes = taskExecutionTimes :+ now)
+    def executeTask: TimerTestState                   = TimerTestState(now, taskExecutionTimes = taskExecutionTimes :+ now)
   }
 
   private type TimerTestIO[+E, +A] = BState[TimerTestState, E, A]

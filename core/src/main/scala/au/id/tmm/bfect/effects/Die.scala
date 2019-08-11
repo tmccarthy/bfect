@@ -23,12 +23,19 @@ trait Die[F[+_, +_]] extends BME[F] {
 
   def die(t: Throwable): F[Nothing, Nothing] = failUnchecked(t)
 
-  def orDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Nothing, A] = handleErrorWith[E, A, Nothing](fea)(die(_))
+  def orDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Nothing, A] =
+    handleErrorWith[E, A, Nothing](fea)(die(_))
 
   //noinspection ConvertibleToMethodValue
-  def refineOrDie[E1, A, E2](fea: F[E1, A])(refinePf: PartialFunction[E1, E2])(implicit ev: E1 <:< Throwable): F[E2, A] =
-    handleErrorWith[E1, A, E2](fea) {
-      e => refinePf.andThen(leftPure(_)).applyOrElse(e, (t: E1) => die(t))
+  def refineOrDie[E1, A, E2](
+    fea: F[E1, A],
+  )(
+    refinePf: PartialFunction[E1, E2],
+  )(implicit
+    ev: E1 <:< Throwable,
+  ): F[E2, A] =
+    handleErrorWith[E1, A, E2](fea) { e =>
+      refinePf.andThen(leftPure(_)).applyOrElse(e, (t: E1) => die(t))
     }
 
   def refineToExceptionOrDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Exception, A] = refineOrDie(fea) {
@@ -42,12 +49,13 @@ object Die extends DieStaticOps {
 
   implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit die: Die[F]) extends BME.Ops[F, E, A](fea) {
     def orDie(implicit ev: E <:< Throwable): F[Nothing, A] = die.orDie(fea)
-    def refineOrDie[E2](refinePf: PartialFunction[E, E2])(implicit ev: E <:< Throwable): F[E2, A] = die.refineOrDie[E, A, E2](fea)(refinePf)
+    def refineOrDie[E2](refinePf: PartialFunction[E, E2])(implicit ev: E <:< Throwable): F[E2, A] =
+      die.refineOrDie[E, A, E2](fea)(refinePf)
     def refineToExceptionOrDie(implicit ev: E <:< Throwable): F[Exception, A] = die.refineToExceptionOrDie(fea)
   }
 }
 
 trait DieStaticOps extends BifunctorMonadErrorStaticOps {
   def failUnchecked[F[+_, +_] : Die](t: Throwable): F[Nothing, Nothing] = Die[F].failUnchecked(t)
-  def die[F[+_, +_] : Die](t: Throwable): F[Nothing, Nothing] = Die[F].die(t)
+  def die[F[+_, +_] : Die](t: Throwable): F[Nothing, Nothing]           = Die[F].die(t)
 }

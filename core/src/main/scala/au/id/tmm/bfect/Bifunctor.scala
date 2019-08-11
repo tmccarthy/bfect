@@ -34,9 +34,9 @@ object Bifunctor {
 
   implicit class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {
     def biMap[L2, R2](leftF: L => L2, rightF: R => R2): F[L2, R2] = bifunctor.biMap(flr)(leftF, rightF)
-    def rightMap[R2](rightF: R => R2): F[L, R2] = bifunctor.rightMap(flr)(rightF)
-    def map[R2](rightF: R => R2): F[L, R2] = bifunctor.map(flr)(rightF)
-    def leftMap[L2](leftF: L => L2): F[L2, R] = bifunctor.leftMap(flr)(leftF)
-    def mapError[L2](leftF: L => L2): F[L2, R] = bifunctor.mapError(flr)(leftF)
+    def rightMap[R2](rightF: R => R2): F[L, R2]                   = bifunctor.rightMap(flr)(rightF)
+    def map[R2](rightF: R => R2): F[L, R2]                        = bifunctor.map(flr)(rightF)
+    def leftMap[L2](leftF: L => L2): F[L2, R]                     = bifunctor.leftMap(flr)(leftF)
+    def mapError[L2](leftF: L => L2): F[L2, R]                    = bifunctor.mapError(flr)(leftF)
   }
 }

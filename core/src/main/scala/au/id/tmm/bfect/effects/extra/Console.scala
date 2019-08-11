@@ -24,7 +24,7 @@ trait Console[F[+_, +_]] {
   def print(string: String): F[Nothing, Unit]
   def println(string: String): F[Nothing, Unit] = print(string + lineSeparator)
 
-  def printStdOut(string: String): F[Nothing, Unit] = print(string)
+  def printStdOut(string: String): F[Nothing, Unit]   = print(string)
   def printlnStdOut(string: String): F[Nothing, Unit] = println(string)
 
   def printStdErr(string: String): F[Nothing, Unit]
@@ -36,7 +36,7 @@ object Console {
   def apply[F[+_, +_] : Console]: Console[F] = implicitly[Console[F]]
 
   trait Live[F[+_, +_]] extends Console[F] { self: Sync[F] =>
-    override val lineSeparator: String = System.lineSeparator()
+    override val lineSeparator: String                           = System.lineSeparator()
     override def print(string: String): F[Nothing, Unit]         = sync(scala.Console.print(string))
     override def println(string: String): F[Nothing, Unit]       = sync(scala.Console.println(string))
     override def printStdErr(string: String): F[Nothing, Unit]   = sync(scala.Console.err.print(string))

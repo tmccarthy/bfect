@@ -46,7 +46,13 @@ object Sync extends SyncStaticOps {
 
   implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit sync: Sync[F]) extends Die.Ops[F, E, A](fea)
 
-  implicit class CloseableOps[F[+_, +_], E, R](acquire: F[E, R])(implicit sync: Sync[F], bracket: Bracket[F], e: R <:< AutoCloseable) {
+  implicit class CloseableOps[F[+_, +_], E, R](
+    acquire: F[E, R],
+  )(implicit
+    sync: Sync[F],
+    bracket: Bracket[F],
+    e: R <:< AutoCloseable,
+  ) {
     def bracketCloseable[E2 >: E, A](use: R => F[E2, A]): F[E2, A] = Sync.bracketCloseable[F, R, E, E2, A](acquire, use)
   }
 
@@ -54,13 +60,19 @@ object Sync extends SyncStaticOps {
 
 trait SyncStaticOps extends DieStaticOps {
   def suspend[F[+_, +_] : Sync, E, A](effect: => F[E, A]): F[E, A] = Sync[F].suspend(effect)
-  def sync[F[+_, +_] : Sync, A](block: => A): F[Nothing, A] = Sync[F].sync(block)
+  def sync[F[+_, +_] : Sync, A](block: => A): F[Nothing, A]        = Sync[F].sync(block)
   def effectTotal[F[+_, +_] : Sync, A](block: => A): F[Nothing, A] = Sync[F].effectTotal(block)
-  def syncCatch[F[+_, +_] : Sync, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] = Sync[F].syncCatch(block)(catchPf)
+  def syncCatch[F[+_, +_] : Sync, E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): F[E, A] =
+    Sync[F].syncCatch(block)(catchPf)
   def syncException[F[+_, +_] : Sync, A](block: => A): F[Exception, A] = Sync[F].syncException(block)
   def syncThrowable[F[+_, +_] : Sync, A](block: => A): F[Throwable, A] = Sync[F].syncThrowable(block)
 
-  def bracketCloseable[F[+_, +_] : Sync : Bracket, R, E, E2 >: E, A](acquire: F[E, R], use: R => F[E2, A])(implicit e: R <:< AutoCloseable): F[E2, A] =
+  def bracketCloseable[F[+_, +_] : Sync : Bracket, R, E, E2 >: E, A](
+    acquire: F[E, R],
+    use: R => F[E2, A],
+  )(implicit
+    e: R <:< AutoCloseable,
+  ): F[E2, A] =
     Bracket[F].bracket[R, E2, A](acquire, r => Sync[F].sync(r.close()), use)
 
 }

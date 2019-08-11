@@ -24,7 +24,7 @@ class EnsureRuntimeSpec extends FlatSpec {
   private val runtime = IORuntime()
 
   "an ensuring IO" should "ensure the execution of the finalizer after a successful IO" in {
-    var ioHasRun = false
+    var ioHasRun        = false
     var finalizerHasRun = false
 
     val io = IO.sync { ioHasRun = true }.ensure(IO.sync { finalizerHasRun = true })

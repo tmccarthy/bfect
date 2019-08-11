@@ -18,7 +18,7 @@ package au.id.tmm.bfect.io.instances
 import au.id.tmm.bfect.io.IO
 import au.id.tmm.bfect.BifunctorMonad
 
-class BifunctorMonadInstance private[instances]() extends BifunctorInstance with BifunctorMonad[IO] {
+class BifunctorMonadInstance private[instances] () extends BifunctorInstance with BifunctorMonad[IO] {
 
   override def rightPure[A](a: A): IO[Nothing, A] = IO.pure(a)
 

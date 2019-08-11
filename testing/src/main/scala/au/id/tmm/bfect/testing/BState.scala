@@ -25,21 +25,20 @@ import scala.util.Random
 
 final case class BState[S, +E, +A](run: S => (S, Either[E, A])) {
 
-  def flatten[E2 >: E, A2](implicit ev: A <:< BState[S, E2, A2]): BState[S, E2, A2] = {
+  def flatten[E2 >: E, A2](implicit ev: A <:< BState[S, E2, A2]): BState[S, E2, A2] =
     BState(
       run andThen {
         case (state, Right(bState)) => bState.run(state)
-        case (state, Left(e)) => (state, Left(e))
-      }
+        case (state, Left(e))       => (state, Left(e))
+      },
     )
-  }
 
   def biMap[E2, A2](leftF: E => E2, rightF: A => A2): BState[S, E2, A2] =
     BState(
       run andThen {
         case (state, Right(a)) => (state, Right(rightF(a)))
-        case (state, Left(e)) => (state, Left(leftF(e)))
-      }
+        case (state, Left(e))  => (state, Left(leftF(e)))
+      },
     )
 
   def leftMap[E2](f: E => E2): BState[S, E2, A] = biMap(f, identity)
@@ -88,7 +87,7 @@ object BState {
 
     override def tailRecM[E, A, A1](a: A)(f: A => BState[S, E, Either[A, A1]]): BState[S, E, A1] = f(a).flatMap {
       case Right(value) => pure(value)
-      case Left(value) => tailRecM(value)(f)
+      case Left(value)  => tailRecM(value)(f)
     }
 
     override def biMap[L1, R1, L2, R2](f: BState[S, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): BState[S, L2, R2] =
@@ -96,21 +95,26 @@ object BState {
   }
 
   trait ConcurrentInstance[S]
-    extends BMEInstance[S]
+      extends BMEInstance[S]
       with Concurrent.WithBMonad[BState[S, +?, +?]]
       with Async[BState[S, +?, +?]]
       with Bracket.WithBMonad[BState[S, +?, +?]]
       with Timer.WithBMonad[BState[S, +?, +?]] {
 
-    private def asFibre[E, A](fea: BState[S, E, A]): Fibre[BState[S, +?, +?], E, A] = new Fibre[BState[S, +?, +?], E, A] {
-      override def cancel: BState[S, Nothing, Unit] = BState[S, Nothing, Unit](d => (d, Right(())))
+    private def asFibre[E, A](fea: BState[S, E, A]): Fibre[BState[S, +?, +?], E, A] =
+      new Fibre[BState[S, +?, +?], E, A] {
+        override def cancel: BState[S, Nothing, Unit] = BState[S, Nothing, Unit](d => (d, Right(())))
 
-      override def join: BState[S, E, A] = fea
-    }
+        override def join: BState[S, E, A] = fea
+      }
 
-    override def start[E, A](fea: BState[S, E, A]): BState[S, Nothing, Fibre[BState[S, +?, +?], E, A]] = pure(asFibre(fea))
+    override def start[E, A](fea: BState[S, E, A]): BState[S, Nothing, Fibre[BState[S, +?, +?], E, A]] =
+      pure(asFibre(fea))
 
-    override def racePair[E, A, B](fea: BState[S, E, A], feb: BState[S, E, B]): BState[S, E, Either[(A, Fibre[BState[S, +?, +?], E, B]), (Fibre[BState[S, +?, +?], E, A], B)]] =
+    override def racePair[E, A, B](
+      fea: BState[S, E, A],
+      feb: BState[S, E, B],
+    ): BState[S, E, Either[(A, Fibre[BState[S, +?, +?], E, B]), (Fibre[BState[S, +?, +?], E, A], B)]] =
       if (Random.nextBoolean()) {
         fea.map(a => Left((a, asFibre(feb))))
       } else {
@@ -123,36 +127,45 @@ object BState {
       var result: Option[Either[E, A]] = None
 
       k {
-        case r@Right(a) => result = Some(r)
-        case l@Left(e) => result = Some(l)
+        case r @ Right(a) => result = Some(r)
+        case l @ Left(e)  => result = Some(l)
       }
 
       BState[S, Nothing, BState[S, E, A]] { state =>
         result match {
           case Some(Right(a)) => (state, Right(BState.pure(a)))
-          case Some(Left(e)) => (state, Right(BState.leftPure[S, E](e)))
-          case None => (state, Right(never))
+          case Some(Left(e))  => (state, Right(BState.leftPure[S, E](e)))
+          case None           => (state, Right(never))
         }
       }.flatten[E, A]
     }
 
-    override def never: BState[S, Nothing, Nothing] = BState { _ => throw new IllegalStateException("never") }
+    override def never: BState[S, Nothing, Nothing] = BState { _ =>
+      throw new IllegalStateException("never")
+    }
 
     override def suspend[E, A](effect: => BState[S, E, A]): BState[S, E, A] =
       BState[S, E, BState[S, E, A]](s => (s, Right(effect))).flatten[E, A]
 
-    override def bracketCase[R, E, A](acquire: BState[S, E, R], release: (R, ExitCase[E, A]) => BState[S, Nothing, _], use: R => BState[S, E, A]): BState[S, E, A] =
+    override def bracketCase[R, E, A](
+      acquire: BState[S, E, R],
+      release: (R, ExitCase[E, A]) => BState[S, Nothing, _],
+      use: R => BState[S, E, A],
+    ): BState[S, E, A] =
       BState { state =>
         val (stateAfterAcquisition, result) = acquire.run(state)
 
         result match {
-          case Right(acquired) => use(acquired).run(stateAfterAcquisition) match {
-            case (stateAfterUse, Right(resultAfterUse)) =>
-              release(acquired, ExitCase.Succeeded(resultAfterUse)).map(_ => resultAfterUse).run(stateAfterUse)
+          case Right(acquired) =>
+            use(acquired).run(stateAfterAcquisition) match {
+              case (stateAfterUse, Right(resultAfterUse)) =>
+                release(acquired, ExitCase.Succeeded(resultAfterUse)).map(_ => resultAfterUse).run(stateAfterUse)
 
-            case (stateAfterUse, Left(error)) =>
-              release(acquired, ExitCase.Failed(Failure.Checked(error))).flatMap(_ => leftPure(error)).run(stateAfterUse)
-          }
+              case (stateAfterUse, Left(error)) =>
+                release(acquired, ExitCase.Failed(Failure.Checked(error)))
+                  .flatMap(_ => leftPure(error))
+                  .run(stateAfterUse)
+            }
           case Left(acquisitionFailure) => (stateAfterAcquisition, Left(acquisitionFailure))
         }
       }
@@ -163,10 +176,10 @@ object BState {
           case (state, result) => {
             result match {
               case Right(a) => (state, Right(a))
-              case Left(e) => f(e).run(state)
+              case Left(e)  => f(e).run(state)
             }
           }
-        }
+        },
       )
 
     override def sleep(duration: Duration): BState[S, Nothing, Unit] =
@@ -207,7 +220,7 @@ object BState {
     * - an instance for `Resources` that reads the live resources
     */
   trait CompleteConcurrentInstance[S] extends ConcurrentInstance[S] with Resources.Live[BState[S, +?, +?]] {
-    override def nowFromState(state: S): (S, Instant) = (state, Instant.EPOCH)
+    override def nowFromState(state: S): (S, Instant)                    = (state, Instant.EPOCH)
     override def applySleepToState(sleepDuration: Duration, state: S): S = state
   }
 

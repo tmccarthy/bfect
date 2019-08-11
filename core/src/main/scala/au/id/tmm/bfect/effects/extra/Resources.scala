@@ -29,7 +29,10 @@ trait Resources[F[+_, +_]] {
 
   def useResourceAsStream[E, A](resourceName: String)(use: InputStream => F[E, A]): F[ResourceStreamError[E], A]
 
-  def resourceAsString(resourceName: String, charset: Charset = Charset.forName("UTF-8")): F[ResourceStreamError[IOException], String]
+  def resourceAsString(
+    resourceName: String,
+    charset: Charset = Charset.forName("UTF-8"),
+  ): F[ResourceStreamError[IOException], String]
 
 }
 
@@ -40,7 +43,7 @@ object Resources {
   sealed trait ResourceStreamError[+E]
 
   object ResourceStreamError {
-    case object ResourceNotFound extends ResourceStreamError[Nothing]
+    case object ResourceNotFound           extends ResourceStreamError[Nothing]
     final case class UseError[E](cause: E) extends ResourceStreamError[E]
   }
 
@@ -48,7 +51,11 @@ object Resources {
     override def getResourceAsStream(resourceName: String): F[Nothing, Option[InputStream]] =
       sync(Option(getClass.getResourceAsStream(resourceName)))
 
-    override def useResourceAsStream[E, A](resourceName: String)(use: InputStream => F[E, A]): F[ResourceStreamError[E], A] =
+    override def useResourceAsStream[E, A](
+      resourceName: String,
+    )(
+      use: InputStream => F[E, A],
+    ): F[ResourceStreamError[E], A] =
       bracket[InputStream, ResourceStreamError[E], A](
         acquire = {
           flatMap(getResourceAsStream(resourceName)) {
@@ -60,7 +67,10 @@ object Resources {
         use = use.andThen(fea => leftMap(fea)(ResourceStreamError.UseError.apply)),
       )
 
-    override def resourceAsString(resourceName: String, charset: Charset = Charset.forName("UTF-8")): F[ResourceStreamError[IOException], String] =
+    override def resourceAsString(
+      resourceName: String,
+      charset: Charset = Charset.forName("UTF-8"),
+    ): F[ResourceStreamError[IOException], String] =
       useResourceAsStream(resourceName) { inputStream =>
         syncCatch(Source.fromInputStream(inputStream, charset.toString).mkString) {
           case e: IOException => e

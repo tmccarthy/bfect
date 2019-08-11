@@ -46,10 +46,10 @@ object BifunctorMonadError extends BifunctorMonadErrorStaticOps {
   def apply[F[+_, +_] : BifunctorMonadError]: BifunctorMonadError[F] = implicitly[BifunctorMonadError[F]]
 
   implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bme: BME[F]) extends BifunctorMonad.Ops[F, E, A](fea) {
-    def attempt: F[Nothing, Either[E, A]] = bme.attempt(fea)
-    def handleErrorWith[E2 >: E](f: E => F[E2, A]): F[E2, A] = bme.handleErrorWith[E, A, E2](fea)(f)
+    def attempt: F[Nothing, Either[E, A]]                                     = bme.attempt(fea)
+    def handleErrorWith[E2 >: E](f: E => F[E2, A]): F[E2, A]                  = bme.handleErrorWith[E, A, E2](fea)(f)
     def recoverWith[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A] = bme.recoverWith[E, A, E2](fea)(catchPf)
-    def catchLeft[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A] = bme.catchLeft[E, A, E2](fea)(catchPf)
+    def catchLeft[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A]   = bme.catchLeft[E, A, E2](fea)(catchPf)
   }
 
 }

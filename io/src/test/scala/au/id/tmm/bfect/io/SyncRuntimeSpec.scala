@@ -34,7 +34,8 @@ class SyncRuntimeSpec extends FlatSpec {
   }
 
   it can "run a fold action that changes the error type" in {
-    val io = IO.leftPure("Error")
+    val io = IO
+      .leftPure("Error")
       .leftMap(s => s"Error: $s")
 
     assert(runtime.run(io) === Failed(Failure.Checked("Error: Error")))
