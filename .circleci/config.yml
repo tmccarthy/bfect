@@ -1,0 +1,141 @@
+version: 2.0
+
+use_jdk_8: &use_jdk_8
+  docker:
+    - image: circleci/openjdk:8-jdk
+
+use_jdk_11: &use_jdk_11
+  docker:
+    - image: circleci/openjdk:11.0.2-jdk
+
+use_scala_2_12: &use_scala_2_12
+  environment:
+    SCALA_VERSION: 2.12.8
+
+use_scala_2_13: &use_scala_2_13
+  environment:
+    SCALA_VERSION: 2.13.0
+
+use_environment: &use_environment
+  working_directory: ~/repo
+
+  environment:
+    JVM_OPTS: -Xmx3200m
+    TERM: dumb
+
+load_cache_step: &load_cache_step
+  - restore_cache:
+      keys:
+        - v1-dependencies-{{ .Revision }}
+        # fallback to using the latest cache if no exact match is found
+        - v1-dependencies-
+      paths:
+        - "~/.ivy2/cache"
+        - "~/.sbt"
+        - "~/.m2"
+
+update_sbt_dependencies_step: &update_sbt_dependencies_step
+  - run:
+      name: Update SBT dependencies
+      command: cat /dev/null | ./sbt +update
+
+save_cache_step: &save_cache_step
+  - save_cache:
+      paths:
+        - "~/.ivy2/cache"
+        - "~/.sbt"
+        - "~/.m2"
+      key: v1-dependencies-{{ .Revision }}
+
+run_tests_step: &run_tests_step
+  - run:
+      name: Run Tests
+      command: cat /dev/null | ./sbt check
+
+git_fetch_tags_step: &git_fetch_tags_step
+  - run:
+      name: Fetch git tags
+      command: git fetch --tags
+
+decrypt_secrets_step: &decrypt_secrets_step
+  - run:
+      name: Decrypt secrets
+      command: ./.secrets/decrypt.sh "${AES_KEY}"
+
+release_step: &release_step
+  - run:
+      name: Release to Sonatype
+      command: ./sbt ++${SCALA_VERSION}! releaseEarly
+
+test: &test
+  steps:
+    - checkout
+    - <<: *load_cache_step
+    - <<: *update_sbt_dependencies_step
+    - <<: *save_cache_step
+    - <<: *run_tests_step
+
+release: &release
+  steps:
+    - checkout
+    - <<: *git_fetch_tags_step
+    - <<: *load_cache_step
+    - <<: *decrypt_secrets_step
+    - <<: *release_step
+
+jobs:
+  test_jdk_8:
+    <<: *use_jdk_8
+    <<: *use_environment
+    <<: *test
+
+  test_jdk_11:
+    <<: *use_jdk_11
+    <<: *use_environment
+    <<: *test
+
+  release_scala_2_12:
+    <<: *use_jdk_8
+    <<: *use_scala_2_12
+    <<: *use_environment
+    <<: *release
+
+  release_scala_2_13:
+    <<: *use_jdk_8
+    <<: *use_scala_2_13
+    <<: *use_environment
+    <<: *release
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - test_jdk_8:
+          filters:
+            tags:
+              only: /.*/
+      - test_jdk_11:
+          filters:
+            tags:
+              only: /.*/
+      - release_scala_2_13:
+          context: Sonatype
+          requires:
+            - test_jdk_8
+            - test_jdk_11
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
+      - release_scala_2_12:
+          context: Sonatype
+          requires:
+            - test_jdk_8
+            - test_jdk_11
+            - release_scala_2_13
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
