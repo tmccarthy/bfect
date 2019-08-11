@@ -21,10 +21,9 @@ import java.util.concurrent.TimeUnit
 import au.id.tmm.bfect._
 import au.id.tmm.bfect.effects._
 import au.id.tmm.bfect.effects.extra.{Calendar, Console, EnvVars, Resources}
-import scalaz.zio
-import scalaz.zio.clock.Clock
-import scalaz.zio.duration.{Duration => ZioDuration}
-import scalaz.zio.{Exit, Fiber, IO}
+import zio.clock.Clock
+import zio.duration.{Duration => ZioDuration}
+import zio.{Exit, Fiber, IO}
 
 import scala.concurrent.duration.{Duration => ScalaDuration}
 
@@ -65,11 +64,11 @@ object ZioInstanceMixins {
         release(resource, bfectExitCaseFrom(zioExit))
       }
 
-      IO.bracketExit[Any, E, R, A](acquire, releaseForZioBracket, use)
+      IO.bracketExit[E, R, A](acquire, releaseForZioBracket, use)
     }
 
     override def bracket[R, E, A](acquire: IO[E, R], release: R => IO[Nothing, _], use: R => IO[E, A]): IO[E, A] =
-      IO.bracket[Any, E, R, A](acquire, release, use)
+      IO.bracket[E, R, A](acquire, release, use)
 
     override def ensure[E, A](fea: IO[E, A])(finalizer: IO[Nothing, _]): IO[E, A] =
       fea.ensuring(finalizer)
@@ -85,18 +84,21 @@ object ZioInstanceMixins {
 
   trait ZioSync extends Sync[IO] with ZioDie { self: BME[IO] =>
 
-    override def suspend[E, A](effect: => IO[E, A]): IO[E, A] = IO.suspend(effect)
+    override def suspend[E, A](effect: => IO[E, A]): IO[E, A] = IO.effectSuspendTotal(effect)
 
     override def sync[A](block: => A): IO[Nothing, A] =
       IO.effectTotal(block)
 
+    //noinspection ConvertibleToMethodValue
     override def syncCatch[E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): IO[E, A] = {
-      val catchTotal: Throwable => IO[E, A] = t => catchPf.andThen(IO.fail).applyOrElse(t, IO.die)
+      val catchTotal: Throwable => IO[E, A] = t => catchPf.andThen(IO.fail(_)).applyOrElse(t, IO.die(_))
 
       IO.effect(block).catchAll(catchTotal)
     }
 
     override def syncThrowable[A](block: => A): IO[Throwable, A] = IO.effect(block)
+
+    override def failUnchecked(t: Throwable): IO[Nothing, Nothing] = super.failUnchecked(t)
   }
 
   trait ZioAsync extends Async[IO] { self: Sync[IO] =>
@@ -124,7 +126,7 @@ object ZioInstanceMixins {
   trait ZioTimer extends Timer.WithBMonad[IO] { self: BME[IO] =>
     private val clock = Clock.Live.clock
 
-    override def sleep(duration: Duration): IO[Nothing, Unit] = clock.sleep(ZioDuration.fromNanos(duration.toNanos))
+    override def sleep(duration: Duration): IO[Nothing, Unit] = clock.sleep(ZioDuration.fromJava(duration))
     override def sleep(scalaDuration: ScalaDuration): IO[Nothing, Unit] = clock.sleep(ZioDuration.fromScala(scalaDuration))
     override def now: IO[Nothing, Instant] = clock.currentTime(TimeUnit.NANOSECONDS).map(nanos => Instant.ofEpochSecond(nanos / 1000000000, nanos))
   }
