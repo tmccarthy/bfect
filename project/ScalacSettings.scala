@@ -19,7 +19,6 @@ object ScalacSettings {
     "-Xlint:doc-detached",              // A Scaladoc comment appears to be detached from its element.
     "-Xlint:inaccessible",              // Warn about inaccessible types in method signatures.
     "-Xlint:infer-any",                 // Warn when a type argument is inferred to be `Any`.
-    "-Xlint:nullary-override",          // Warn when non-nullary `def f()` overrides nullary `def f`.
     "-Xlint:nullary-unit",              // Warn when nullary methods return Unit.
     "-Xlint:option-implicit",           // Option.apply used implicit view.
     "-Xlint:package-object-classes",    // Class or object defined in package object.

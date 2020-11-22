@@ -20,12 +20,12 @@ import java.time.{Duration, Instant}
 import au.id.tmm.bfect.effects.Timer.Ops
 import au.id.tmm.bfect.effects.TimerSpec.{TimerTestIO, TimerTestState, dummyTask}
 import au.id.tmm.bfect.testing.BState
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.concurrent.duration.{Duration => ScalaDuration}
 
 // Ideally this test would be in the tests for bfect-core, but sbt can't handle the cyclic dependency on BState
-class TimerSpec extends FlatSpec {
+class TimerSpec extends AnyFlatSpec {
 
   // Need to bring this into scope to override the default implementation provided by the `Concurrent` instance
   private implicit val timerInstance: Timer[TimerTestIO] = TimerSpec.timerInstanceForTests

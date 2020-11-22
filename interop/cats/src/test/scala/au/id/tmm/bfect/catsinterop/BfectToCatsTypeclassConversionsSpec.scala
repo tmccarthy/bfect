@@ -15,9 +15,9 @@
   */
 package au.id.tmm.bfect.catsinterop
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class BfectToCatsTypeclassConversionsSpec extends FlatSpec {
+class BfectToCatsTypeclassConversionsSpec extends AnyFlatSpec {
 
   "the monad instance" should "be resolved without difficulty" in {
     import au.id.tmm.bfect.EitherInstances._

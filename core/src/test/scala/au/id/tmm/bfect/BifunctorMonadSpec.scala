@@ -16,9 +16,9 @@
 package au.id.tmm.bfect
 
 import au.id.tmm.bfect.BifunctorMonadSpec._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class BifunctorMonadSpec extends FlatSpec {
+class BifunctorMonadSpec extends AnyFlatSpec {
 
   import BifunctorMonad._
   import EitherInstances.biFunctorMonadInstance
