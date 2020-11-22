@@ -17,9 +17,9 @@ package au.id.tmm.bfect.io
 
 import au.id.tmm.bfect.ExitCase.{Failed, Succeeded}
 import au.id.tmm.bfect.Failure
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class EnsureRuntimeSpec extends FlatSpec {
+class EnsureRuntimeSpec extends AnyFlatSpec {
 
   private val runtime = IORuntime()
 
