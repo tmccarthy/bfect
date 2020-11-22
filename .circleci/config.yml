@@ -10,11 +10,11 @@ use_jdk_11: &use_jdk_11
 
 use_scala_2_12: &use_scala_2_12
   environment:
-    SCALA_VERSION: 2.12.8
+    SCALA_VERSION: 2.12.12
 
 use_scala_2_13: &use_scala_2_13
   environment:
-    SCALA_VERSION: 2.13.0
+    SCALA_VERSION: 2.13.4
 
 use_environment: &use_environment
   working_directory: ~/repo

@@ -6,8 +6,8 @@ object DependencySettings {
 
   val commonDependencies: Seq[Def.Setting[Seq[ModuleID]]] = Seq(
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % Test,
-    libraryDependencies += "com.github.ghik" %% "silencer-lib" % "1.4.1" % Provided,
-    libraryDependencies += compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.4.1"),
+    libraryDependencies += "com.github.ghik" %% "silencer-lib" % "1.7.1" % Provided cross CrossVersion.full,
+    libraryDependencies += compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.7.1" cross CrossVersion.full),
   )
 
   val catsDependency = libraryDependencies += {
