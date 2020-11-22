@@ -108,7 +108,8 @@ object ZioInstanceMixins {
 
     //noinspection ConvertibleToMethodValue
     override def syncCatch[E, A](block: => A)(catchPf: PartialFunction[Throwable, E]): IO[E, A] = {
-      val catchTotal: Throwable => IO[E, A] = t => catchPf.andThen(IO.fail(_)).applyOrElse(t, IO.die(_))
+      val catchTotal: Throwable => IO[E, A] = t =>
+        catchPf.andThen(IO.fail(_)).applyOrElse(t, (t: Throwable) => IO.die(t))
 
       IO.effect(block).catchAll(catchTotal)
     }
@@ -141,7 +142,7 @@ object ZioInstanceMixins {
   }
 
   trait ZioTimer extends Timer.WithBMonad[IO] { self: BME[IO] =>
-    private val clock = Clock.Live.clock
+    private val clock = Clock.Service.live
 
     override def sleep(duration: Duration): IO[Nothing, Unit] = clock.sleep(ZioDuration.fromJava(duration))
     override def sleep(scalaDuration: ScalaDuration): IO[Nothing, Unit] =
@@ -184,7 +185,7 @@ object ZioInstanceMixins {
           cbForZio(IO.fromEither(result))
         }
 
-        Left(cancellationToken.orDie)
+        Left(cancellationToken)
       }
   }
 
