@@ -47,7 +47,7 @@ lazy val interopZio = project
   .in(file("interop/zio"))
   .settings(settingsHelper.settingsForSubprojectCalled("interop-zio"))
   .settings(
-    libraryDependencies += "dev.zio" %% "zio" % "1.0.0-RC11-1",
+    libraryDependencies += "dev.zio" %% "zio" % "1.0.3",
   )
   .dependsOn(core)
 

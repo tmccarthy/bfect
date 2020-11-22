@@ -17,18 +17,18 @@ package au.id.tmm.bfect.ziointerop
 
 import au.id.tmm.bfect.{Failure => BfectFailure}
 
-import scala.annotation.tailrec
-
 object DataConversions {
 
-  @tailrec
-  def zioCauseToBfectFailure[E](zioFailure: zio.Cause[E]): BfectFailure[E] = zioFailure match {
-    case zio.Cause.Fail(value)          => BfectFailure.Checked(value)
-    case zio.Cause.Die(value)           => BfectFailure.Unchecked(value)
-    case zio.Cause.Interrupt            => BfectFailure.Interrupted
-    case zio.Cause.Then(left, right)    => zioCauseToBfectFailure(left)
-    case zio.Cause.Both(left, right)    => zioCauseToBfectFailure(left)
-    case zio.Cause.Traced(cause, trace) => zioCauseToBfectFailure(cause)
-  }
+  def zioCauseToBfectFailure[E](zioFailure: zio.Cause[E]): BfectFailure[E] =
+    zioFailure.fold[BfectFailure[E]](
+      empty = ???,
+      failCase = BfectFailure.Checked(_),
+      dieCase = BfectFailure.Unchecked(_),
+      interruptCase = _ => BfectFailure.Interrupted,
+    )(
+      thenCase = (left, right) => left,
+      bothCase = (left, right) => left,
+      tracedCase = (failure, trace) => failure,
+    )
 
 }
