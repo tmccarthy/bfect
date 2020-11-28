@@ -15,9 +15,9 @@
   */
 package au.id.tmm.bfect
 
-trait BifunctorMonadError[F[+_, +_]] extends BifunctorMonad[F] {
+trait BifunctorMonadError[F[_, _]] extends BifunctorMonad[F] {
 
-  def raiseError[E](e: E): F[E, Nothing] = leftPure(e)
+  def raiseError[E, A](e: E): F[E, A] = leftPure(e)
 
   def handleErrorWith[E1, A, E2](fea: F[E1, A])(f: E1 => F[E2, A]): F[E2, A]
 
@@ -33,7 +33,7 @@ trait BifunctorMonadError[F[+_, +_]] extends BifunctorMonad[F] {
     recoverWith[E1, A, E2](fea)(catchPf)
 
   def attempt[E, A](fea: F[E, A]): F[Nothing, Either[E, A]] =
-    handleErrorWith {
+    handleErrorWith[E, Either[E, A], Nothing] {
       rightMap(fea)(a => Right(a): Either[E, A])
     } { e =>
       rightPure(Left(e): Either[E, A])
@@ -43,9 +43,9 @@ trait BifunctorMonadError[F[+_, +_]] extends BifunctorMonad[F] {
 
 object BifunctorMonadError extends BifunctorMonadErrorStaticOps {
 
-  def apply[F[+_, +_] : BifunctorMonadError]: BifunctorMonadError[F] = implicitly[BifunctorMonadError[F]]
+  def apply[F[_, _] : BifunctorMonadError]: BifunctorMonadError[F] = implicitly[BifunctorMonadError[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit bme: BME[F]) extends BifunctorMonad.Ops[F, E, A](fea) {
+  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit bme: BME[F]) extends BifunctorMonad.Ops[F, E, A](fea) {
     def attempt: F[Nothing, Either[E, A]]                                     = bme.attempt(fea)
     def handleErrorWith[E2 >: E](f: E => F[E2, A]): F[E2, A]                  = bme.handleErrorWith[E, A, E2](fea)(f)
     def recoverWith[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A] = bme.recoverWith[E, A, E2](fea)(catchPf)
@@ -55,5 +55,5 @@ object BifunctorMonadError extends BifunctorMonadErrorStaticOps {
 }
 
 trait BifunctorMonadErrorStaticOps extends BifunctorMonadStaticOps {
-  def raiseError[F[+_, +_] : BME, E](e: E): F[E, Nothing] = BME[F].raiseError(e)
+  def raiseError[F[_, _] : BME, E, A](e: E): F[E, A] = BME[F].raiseError(e)
 }

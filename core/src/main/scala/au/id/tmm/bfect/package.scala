@@ -23,7 +23,7 @@ package object bfect {
   type BMonad[F[_, _]] = BifunctorMonad[F]
   val BMonad: BifunctorMonad.type = BifunctorMonad
 
-  type BME[F[+_, +_]] = BifunctorMonadError[F]
+  type BME[F[_, _]] = BifunctorMonadError[F]
   val BME: BifunctorMonadError.type = BifunctorMonadError
 
 }
