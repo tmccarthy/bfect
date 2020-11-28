@@ -17,14 +17,14 @@ package au.id.tmm.bfect.effects
 
 import au.id.tmm.bfect.{BME, BifunctorMonadErrorStaticOps}
 
-trait Die[F[+_, +_]] extends BME[F] {
+trait Die[F[_, _]] extends BME[F] {
 
   def failUnchecked(t: Throwable): F[Nothing, Nothing]
 
   def die(t: Throwable): F[Nothing, Nothing] = failUnchecked(t)
 
   def orDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Nothing, A] =
-    handleErrorWith[E, A, Nothing](fea)(die(_))
+    handleErrorWith[E, A, Nothing](fea)(e => biWiden(die(e)))
 
   //noinspection ConvertibleToMethodValue
   def refineOrDie[E1, A, E2](
@@ -35,7 +35,7 @@ trait Die[F[+_, +_]] extends BME[F] {
     ev: E1 <:< Throwable,
   ): F[E2, A] =
     handleErrorWith[E1, A, E2](fea) { e =>
-      refinePf.andThen(leftPure(_)).applyOrElse(e, (t: E1) => die(t))
+      refinePf.andThen(e2 => leftPure[E2, A](e2)).applyOrElse(e, (t: E1) => biWiden(die(t)))
     }
 
   def refineToExceptionOrDie[E, A](fea: F[E, A])(implicit ev: E <:< Throwable): F[Exception, A] = refineOrDie(fea) {
@@ -45,9 +45,9 @@ trait Die[F[+_, +_]] extends BME[F] {
 }
 
 object Die extends DieStaticOps {
-  def apply[F[+_, +_] : Die]: Die[F] = implicitly[Die[F]]
+  def apply[F[_, _] : Die]: Die[F] = implicitly[Die[F]]
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit die: Die[F]) extends BME.Ops[F, E, A](fea) {
+  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit die: Die[F]) extends BME.Ops[F, E, A](fea) {
     def orDie(implicit ev: E <:< Throwable): F[Nothing, A] = die.orDie(fea)
     def refineOrDie[E2](refinePf: PartialFunction[E, E2])(implicit ev: E <:< Throwable): F[E2, A] =
       die.refineOrDie[E, A, E2](fea)(refinePf)
@@ -56,6 +56,6 @@ object Die extends DieStaticOps {
 }
 
 trait DieStaticOps extends BifunctorMonadErrorStaticOps {
-  def failUnchecked[F[+_, +_] : Die](t: Throwable): F[Nothing, Nothing] = Die[F].failUnchecked(t)
-  def die[F[+_, +_] : Die](t: Throwable): F[Nothing, Nothing]           = Die[F].die(t)
+  def failUnchecked[F[_, _] : Die](t: Throwable): F[Nothing, Nothing] = Die[F].failUnchecked(t)
+  def die[F[_, _] : Die](t: Throwable): F[Nothing, Nothing]           = Die[F].die(t)
 }
