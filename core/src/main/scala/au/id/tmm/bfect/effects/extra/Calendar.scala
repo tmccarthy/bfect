@@ -20,7 +20,7 @@ import java.time._
 import au.id.tmm.bfect.BMonad
 import au.id.tmm.bfect.effects.{Now, Sync}
 
-trait Calendar[F[+_, +_]] extends Now[F] {
+trait Calendar[F[_, _]] extends Now[F] {
 
   def localTimezone: F[Nothing, ZoneId]
 
@@ -36,25 +36,30 @@ trait Calendar[F[+_, +_]] extends Now[F] {
 
 object Calendar {
 
-  def apply[F[+_, +_] : Calendar]: Calendar[F] = implicitly[Calendar[F]]
+  def apply[F[_, _] : Calendar]: Calendar[F] = implicitly[Calendar[F]]
 
-  trait WithBMonad[F[+_, +_]] extends Calendar[F] { self: BMonad[F] =>
-    override def nowZonedDateTime: F[Nothing, ZonedDateTime] = flatMap(localTimezone) { tz =>
-      map(now) { now =>
-        now.atZone(tz)
+  trait WithBMonad[F[_, _]] extends Calendar[F] { self: BMonad[F] =>
+    override def nowZonedDateTime: F[Nothing, ZonedDateTime] =
+      flatMap[Nothing, Nothing, ZoneId, ZonedDateTime](localTimezone) { tz =>
+        map[Nothing, Instant, ZonedDateTime](now) { now =>
+          now.atZone(tz)
+        }
       }
-    }
 
-    override def nowLocalDateTime: F[Nothing, LocalDateTime] = map(nowZonedDateTime)(_.toLocalDateTime)
+    override def nowLocalDateTime: F[Nothing, LocalDateTime] =
+      map[Nothing, ZonedDateTime, LocalDateTime](nowZonedDateTime)(_.toLocalDateTime)
 
-    override def nowLocalDate: F[Nothing, LocalDate] = map(nowZonedDateTime)(_.toLocalDate)
+    override def nowLocalDate: F[Nothing, LocalDate] =
+      map[Nothing, ZonedDateTime, LocalDate](nowZonedDateTime)(_.toLocalDate)
 
-    override def nowLocalTime: F[Nothing, LocalTime] = map(nowZonedDateTime)(_.toLocalTime)
+    override def nowLocalTime: F[Nothing, LocalTime] =
+      map[Nothing, ZonedDateTime, LocalTime](nowZonedDateTime)(_.toLocalTime)
 
-    override def nowOffsetDateTime: F[Nothing, OffsetDateTime] = map(nowZonedDateTime)(_.toOffsetDateTime)
+    override def nowOffsetDateTime: F[Nothing, OffsetDateTime] =
+      map[Nothing, ZonedDateTime, OffsetDateTime](nowZonedDateTime)(_.toOffsetDateTime)
   }
 
-  trait Live[F[+_, +_]] extends Calendar.WithBMonad[F] { self: Sync[F] =>
+  trait Live[F[_, _]] extends Calendar.WithBMonad[F] { self: Sync[F] =>
     override def localTimezone: F[Nothing, ZoneId]             = sync(ZoneId.systemDefault())
     override def now: F[Nothing, Instant]                      = sync(Instant.now())
     override def nowInstant: F[Nothing, Instant]               = sync(Instant.now())

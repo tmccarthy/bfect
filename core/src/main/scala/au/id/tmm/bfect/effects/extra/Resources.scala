@@ -23,7 +23,7 @@ import au.id.tmm.bfect.effects.{Bracket, Sync}
 
 import scala.io.Source
 
-trait Resources[F[+_, +_]] {
+trait Resources[F[_, _]] {
 
   def getResourceAsStream(resourceName: String): F[Nothing, Option[InputStream]]
 
@@ -38,16 +38,16 @@ trait Resources[F[+_, +_]] {
 
 object Resources {
 
-  def apply[F[+_, +_] : Resources]: Resources[F] = implicitly[Resources[F]]
+  def apply[F[_, _] : Resources]: Resources[F] = implicitly[Resources[F]]
 
   sealed trait ResourceStreamError[+E]
 
   object ResourceStreamError {
-    case object ResourceNotFound           extends ResourceStreamError[Nothing]
-    final case class UseError[E](cause: E) extends ResourceStreamError[E]
+    case object ResourceNotFound            extends ResourceStreamError[Nothing]
+    final case class UseError[+E](cause: E) extends ResourceStreamError[E]
   }
 
-  trait Live[F[+_, +_]] extends Resources[F] { self: Sync[F] with Bracket[F] =>
+  trait Live[F[_, _]] extends Resources[F] { self: Sync[F] with Bracket[F] =>
     override def getResourceAsStream(resourceName: String): F[Nothing, Option[InputStream]] =
       sync(Option(getClass.getResourceAsStream(resourceName)))
 
