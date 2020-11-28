@@ -97,7 +97,7 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
   ) extends CatsAsyncForBfectAsync
       with cats.effect.Concurrent[F[Throwable, ?]] {
     override def start[A](fa: F[Throwable, A]): F[Throwable, cats.effect.Fiber[F[Throwable, ?], A]] =
-      bfectAsync.map(bfectConcurrent.start(fa))(asCatsFiber)
+      bfectAsync.map(bfectAsync.asThrowableFallible(bfectConcurrent.start(fa)))(asCatsFiber)
 
     override def racePair[A, B](
       fa: F[Throwable, A],
@@ -110,7 +110,8 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
 
     private def asCatsFiber[A](bfectFibre: Fibre[F, Throwable, A]): cats.effect.Fiber[F[Throwable, ?], A] =
       new cats.effect.Fiber[F[Throwable, ?], A] {
-        override def cancel: cats.effect.CancelToken[F[Throwable, ?]] = bfectFibre.cancel
+        override def cancel: cats.effect.CancelToken[F[Throwable, ?]] =
+          bfectAsync.asThrowableFallible(bfectFibre.cancel)
 
         override def join: F[Throwable, A] = bfectFibre.join
       }
@@ -124,7 +125,7 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
   }
 
   private def makeFailureUnchecked[F[_, _], E, A](fea: F[E, A])(implicit syncInstance: Sync[F]): F[Nothing, A] =
-    syncInstance.handleErrorWith(fea) {
+    syncInstance.handleErrorWith[E, A, Nothing](fea) {
       case t: Throwable => syncInstance.sync(throw t)
       case e            => syncInstance.sync(throw FailureInCancellationToken(e))
     }
@@ -133,11 +134,11 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
 
   class CatsClockForBfectNow[F[_, _]](implicit bfectNow: Now[F], bFunctor: BFunctor[F])
       extends cats.effect.Clock[F[Throwable, ?]] {
-    import BFunctor.Ops
+    override def realTime(unit: TimeUnit): F[Throwable, Long] =
+      bFunctor.map(bFunctor.asThrowableFallible(Now.now[F]))(_.toEpochMilli)
 
-    override def realTime(unit: TimeUnit): F[Throwable, Long] = Now.now[F].map(_.toEpochMilli).leftWiden
-
-    override def monotonic(unit: TimeUnit): F[Throwable, Long] = Now.now[F].map(i => i.getEpochSecond * i.getNano).leftWiden
+    override def monotonic(unit: TimeUnit): F[Throwable, Long] =
+      bFunctor.map(bFunctor.asThrowableFallible(Now.now[F]))(i => i.getEpochSecond * i.getNano)
   }
 
   class CatsTimerForBfectTimer[F[_, _]](implicit bfectTimer: Timer[F], bFunctor: BFunctor[F])
