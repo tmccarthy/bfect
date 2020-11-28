@@ -37,8 +37,8 @@ object ZioInstanceMixins {
   }
 
   trait ZioBMonad extends BifunctorMonad[IO] { self: BFunctor[IO] =>
-    override def rightPure[A](a: A): IO[Nothing, A]                                              = IO.succeed(a)
-    override def leftPure[E](e: E): IO[E, Nothing]                                               = IO.fail(e)
+    override def rightPure[E, A](a: A): IO[E, A]                                                 = IO.succeed(a)
+    override def leftPure[E, A](e: E): IO[E, A]                                                  = IO.fail(e)
     override def flatMap[E1, E2 >: E1, A, B](fe1a: IO[E1, A])(fafe2b: A => IO[E2, B]): IO[E2, B] = fe1a.flatMap(fafe2b)
     override def tailRecM[E, A, A1](a: A)(f: A => IO[E, Either[A, A1]]): IO[E, A1] =
       f(a).flatMap {

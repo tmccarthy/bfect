@@ -78,9 +78,9 @@ object BState {
   def rightInspect[S, A](f: S => A): BState[S, Nothing, A] = inspect(f.andThen(Right.apply))
 
   trait BMEInstance[S] extends BME[BState[S, +?, +?]] {
-    override def rightPure[A](a: A): BState[S, Nothing, A] = BState.pure(a)
+    override def rightPure[E, A](a: A): BState[S, E, A] = BState.pure(a)
 
-    override def leftPure[E](e: E): BState[S, E, Nothing] = BState.leftPure(e)
+    override def leftPure[E, A](e: E): BState[S, E, A] = BState.leftPure(e)
 
     override def flatMap[E1, E2 >: E1, A, B](fe1a: BState[S, E1, A])(fafe2b: A => BState[S, E2, B]): BState[S, E2, B] =
       fe1a.flatMap(fafe2b)

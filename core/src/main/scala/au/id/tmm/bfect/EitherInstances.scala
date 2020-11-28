@@ -29,9 +29,9 @@ object EitherInstanceImpls {
   }
 
   class BifunctorMonadInstance extends BifunctorInstance with BifunctorMonad[Either] {
-    override def rightPure[A](a: A): Either[Nothing, A] = Right(a)
+    override def rightPure[E, A](a: A): Either[E, A] = Right(a)
 
-    override def leftPure[E](e: E): Either[E, Nothing] = Left(e)
+    override def leftPure[E, A](e: E): Either[E, A] = Left(e)
 
     override def flatMap[E1, E2 >: E1, A, B](fe1a: Either[E1, A])(fafe2b: A => Either[E2, B]): Either[E2, B] =
       fe1a.flatMap(fafe2b)

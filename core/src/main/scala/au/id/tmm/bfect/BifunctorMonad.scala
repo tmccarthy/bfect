@@ -17,15 +17,15 @@ package au.id.tmm.bfect
 
 import scala.util.Try
 
-trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
+trait BifunctorMonad[F[_, _]] extends Bifunctor[F] {
 
-  def rightPure[A](a: A): F[Nothing, A]
+  def rightPure[E, A](a: A): F[E, A]
 
-  def pure[A](a: A): F[Nothing, A] = rightPure(a)
+  def pure[E, A](a: A): F[E, A] = rightPure(a)
 
-  def unit: F[Nothing, Unit] = rightPure(())
+  def unit[E]: F[E, Unit] = rightPure(())
 
-  def leftPure[E](e: E): F[E, Nothing]
+  def leftPure[E, A](e: E): F[E, A]
 
   def fromOption[E, A](option: Option[A], ifNone: => E): F[E, A] = option match {
     case Some(a) => rightPure(a)
@@ -61,7 +61,11 @@ trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
 
   def flatMap[E1, E2 >: E1, A, B](fe1a: F[E1, A])(fafe2b: A => F[E2, B]): F[E2, B]
 
-  def forever[E](fea: F[E, _]): F[E, Nothing] = flatMap(fea)(_ => forever(fea))
+  def forever[E, A](fea: F[E, A]): F[E, Nothing] = flatMap[E, E, A, Nothing](fea) { a =>
+    tailRecM[E, A, Nothing](a) { _ =>
+      map(fea)(Left.apply)
+    }
+  }
 
   /**
     * Keeps calling `f` until a `scala.util.Right[B]` is returned.
@@ -74,6 +78,10 @@ trait BifunctorMonad[F[+_, +_]] extends Bifunctor[F] {
 
   def absolveOption[E, A](feOptionA: F[E, Option[A]], ifNone: => E): F[E, A] = flatMap(feOptionA)(fromOption(_, ifNone))
 
+  def asExceptionFallible[A](fa: F[Nothing, A]): F[Exception, A] = leftWiden(fa)
+
+  def asThrowableFallible[A](fa: F[Nothing, A]): F[Throwable, A] = leftWiden(fa)
+
 }
 
 object BifunctorMonad extends BifunctorMonadStaticOps {
@@ -84,6 +92,11 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
     def flatMap[E2 >: E, B](f: A => F[E2, B]): F[E2, B] = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
     def forever: F[E, Nothing]                          = bifunctorMonad.forever(fea)
     def unit: F[E, Unit]                                = bifunctorMonad.unit(fea)
+
+    def asExceptionFallible(implicit ev: E =:= Nothing): F[Exception, A] =
+      bifunctorMonad.asExceptionFallible(fea.asInstanceOf[F[Nothing, A]])
+    def asThrowableFallible(implicit ev: E =:= Nothing): F[Throwable, A] =
+      bifunctorMonad.asThrowableFallible(fea.asInstanceOf[F[Nothing, A]])
   }
 
   implicit class FlattenOps[F[+_, +_], E1, E2 >: E1, A](
@@ -105,9 +118,9 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
 }
 
 trait BifunctorMonadStaticOps {
-  def rightPure[F[+_, +_] : BifunctorMonad, A](a: A): F[Nothing, A]               = BifunctorMonad[F].rightPure(a)
-  def pure[F[+_, +_] : BifunctorMonad, A](a: A): F[Nothing, A]                    = BifunctorMonad[F].pure(a)
-  def leftPure[F[+_, +_] : BifunctorMonad, E](e: E): F[E, Nothing]                = BifunctorMonad[F].leftPure(e)
+  def rightPure[F[+_, +_] : BifunctorMonad, E, A](a: A): F[E, A]                  = BifunctorMonad[F].rightPure(a)
+  def pure[F[+_, +_] : BifunctorMonad, E, A](a: A): F[E, A]                       = BifunctorMonad[F].pure(a)
+  def leftPure[F[+_, +_] : BifunctorMonad, E, A](e: E): F[E, A]                   = BifunctorMonad[F].leftPure(e)
   def fromEither[F[+_, +_] : BifunctorMonad, E, A](either: Either[E, A]): F[E, A] = BifunctorMonad[F].fromEither(either)
   def fromOption[F[+_, +_] : BifunctorMonad, E, A](option: Option[A], ifNone: => E): F[E, A] =
     BifunctorMonad[F].fromOption(option, ifNone)
