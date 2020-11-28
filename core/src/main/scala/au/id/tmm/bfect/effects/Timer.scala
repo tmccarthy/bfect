@@ -22,54 +22,54 @@ import au.id.tmm.bfect.effects.Timer.convertScalaDurationToJavaDuration
 
 import scala.concurrent.duration.{Duration => ScalaDuration, FiniteDuration => FiniteScalaDuration}
 
-trait Timer[F[+_, +_]] extends Now[F] {
+trait Timer[F[_, _]] extends Now[F] {
 
   def sleep(duration: Duration): F[Nothing, Unit]
 
   def sleep(scalaDuration: ScalaDuration): F[Nothing, Unit] =
     sleep(convertScalaDurationToJavaDuration(scalaDuration))
 
-  def repeatFixedDelay[E](fea: F[E, _])(delay: Duration): F[E, Nothing]
+  def repeatFixedDelay[E, A](fea: F[E, A])(delay: Duration): F[E, Nothing]
 
-  def repeatFixedDelay[E](fea: F[E, _], delayAsScalaDuration: ScalaDuration): F[E, Nothing]
+  def repeatFixedDelay[E, A](fea: F[E, A], delayAsScalaDuration: ScalaDuration): F[E, Nothing]
 
-  def repeatFixedRate[E](fea: F[E, _])(period: Duration): F[E, Nothing]
+  def repeatFixedRate[E, A](fea: F[E, A])(period: Duration): F[E, Nothing]
 
-  def repeatFixedRate[E](fea: F[E, _], periodAsScalaDuration: ScalaDuration): F[E, Nothing] =
+  def repeatFixedRate[E, A](fea: F[E, A], periodAsScalaDuration: ScalaDuration): F[E, Nothing] =
     repeatFixedRate(fea)(convertScalaDurationToJavaDuration(periodAsScalaDuration))
 
 }
 
 object Timer extends TimerStaticOps {
 
-  def apply[F[+_, +_] : Timer]: Timer[F] = implicitly[Timer[F]]
+  def apply[F[_, _] : Timer]: Timer[F] = implicitly[Timer[F]]
 
-  trait WithBMonad[F[+_, +_]] extends Timer[F] { self: BMonad[F] =>
-    override def repeatFixedDelay[E](fea: F[E, _])(delay: Duration): F[E, Nothing] =
-      forever(flatMap(fea)(_ => sleep(delay)))
+  trait WithBMonad[F[_, _]] extends Timer[F] { self: BMonad[F] =>
+    override def repeatFixedDelay[E, A](fea: F[E, A])(delay: Duration): F[E, Nothing] =
+      forever(flatMap(fea)(_ => leftWiden(sleep(delay))))
 
-    override def repeatFixedDelay[E](fea: F[E, _], delayAsScalaDuration: ScalaDuration): F[E, Nothing] =
+    override def repeatFixedDelay[E, A](fea: F[E, A], delayAsScalaDuration: ScalaDuration): F[E, Nothing] =
       repeatFixedDelay(fea)(convertScalaDurationToJavaDuration(delayAsScalaDuration))
 
-    override def repeatFixedRate[E](fea: F[E, _])(period: Duration): F[E, Nothing] = {
-      def repeatFixedRateStartingAt(t0: Long, period: Long): F[E, Nothing] = flatMap(fea) { _ =>
-        flatMap(now) { instantCompleted =>
+    override def repeatFixedRate[E, A](fea: F[E, A])(period: Duration): F[E, Nothing] = {
+      def repeatFixedRateStartingAt(t0: Long, period: Long): F[E, Nothing] = flatMap[E, E, A, Nothing](fea) { _ =>
+        flatMap[Nothing, E, Instant, Nothing](now) { instantCompleted =>
           val tCompleted    = instantCompleted.toEpochMilli
           val nextStart     = Instant.ofEpochMilli((period - ((tCompleted - t0) % period)) + tCompleted)
           val sleepDuration = Duration.between(instantCompleted, nextStart)
-          flatMap(sleep(sleepDuration)) { _ =>
+          flatMap[Nothing, E, Unit, Nothing](sleep(sleepDuration)) { _ =>
             repeatFixedRateStartingAt(t0, period)
           }
         }
       }
 
-      flatMap(now) { instantStarted =>
+      flatMap[Nothing, E, Instant, Nothing](now) { instantStarted =>
         repeatFixedRateStartingAt(instantStarted.toEpochMilli, period.toMillis)
       }
     }
   }
 
-  implicit class Ops[F[+_, +_], E, A](fea: F[E, A])(implicit timerInstance: Timer[F]) {
+  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit timerInstance: Timer[F]) {
     def repeatFixedDelay(delay: Duration): F[E, Nothing] = timerInstance.repeatFixedDelay(fea)(delay)
     def repeatFixedDelay(delayAsScalaDuration: ScalaDuration): F[E, Nothing] =
       timerInstance.repeatFixedDelay(fea, delayAsScalaDuration)
@@ -88,6 +88,6 @@ object Timer extends TimerStaticOps {
 }
 
 trait TimerStaticOps extends NowStaticOps {
-  def sleep[F[+_, +_] : Timer](duration: Duration): F[Nothing, Unit]           = Timer[F].sleep(duration)
-  def sleep[F[+_, +_] : Timer](scalaDuration: ScalaDuration): F[Nothing, Unit] = Timer[F].sleep(scalaDuration)
+  def sleep[F[_, _] : Timer](duration: Duration): F[Nothing, Unit]           = Timer[F].sleep(duration)
+  def sleep[F[_, _] : Timer](scalaDuration: ScalaDuration): F[Nothing, Unit] = Timer[F].sleep(scalaDuration)
 }

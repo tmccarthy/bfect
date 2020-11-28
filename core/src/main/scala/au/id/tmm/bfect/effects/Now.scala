@@ -17,7 +17,7 @@ package au.id.tmm.bfect.effects
 
 import java.time.Instant
 
-trait Now[F[+_, +_]] {
+trait Now[F[_, _]] {
 
   def now: F[Nothing, Instant]
 
@@ -25,10 +25,10 @@ trait Now[F[+_, +_]] {
 
 object Now extends NowStaticOps {
 
-  def apply[F[+_, +_] : Now]: Now[F] = implicitly[Now[F]]
+  def apply[F[_, _] : Now]: Now[F] = implicitly[Now[F]]
 
 }
 
 trait NowStaticOps {
-  def now[F[+_, +_] : Now]: F[Nothing, Instant] = Now[F].now
+  def now[F[_, _] : Now]: F[Nothing, Instant] = Now[F].now
 }
