@@ -65,8 +65,6 @@ sealed trait IO[+E, +A] {
       case self => IO.Ensure(self, finalizer)
     }
 
-  def fork: IO[Nothing, IOFibre[E, A]] = ???
-
 }
 
 object IO {
