@@ -35,6 +35,10 @@ trait Bifunctor[F[_, _]] {
 
   @inline def leftWiden[L1, L2 >: L1, R](f: F[L1, R]): F[L2, R] = f.asInstanceOf[F[L2, R]]
 
+  @inline def asExceptionFallible[A](fa: F[Nothing, A]): F[Exception, A] = leftWiden(fa)
+
+  @inline def asThrowableFallible[A](fa: F[Nothing, A]): F[Throwable, A] = leftWiden(fa)
+
 }
 
 object Bifunctor {
@@ -50,5 +54,10 @@ object Bifunctor {
     @inline def rightWiden[R2 >: R]: F[L, R2]                     = bifunctor.rightWiden(flr)
     @inline def widen[R2 >: R]: F[L, R2]                          = bifunctor.widen(flr)
     @inline def leftWiden[L2 >: L]: F[L2, R]                      = bifunctor.leftWiden(flr)
+
+    @inline def asExceptionFallible(implicit ev: L =:= Nothing): F[Exception, R] =
+      bifunctor.asExceptionFallible(flr.asInstanceOf[F[Nothing, R]])
+    @inline def asThrowableFallible(implicit ev: L =:= Nothing): F[Throwable, R] =
+      bifunctor.asThrowableFallible(flr.asInstanceOf[F[Nothing, R]])
   }
 }

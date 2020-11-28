@@ -78,25 +78,16 @@ trait BifunctorMonad[F[_, _]] extends Bifunctor[F] {
 
   def absolveOption[E, A](feOptionA: F[E, Option[A]], ifNone: => E): F[E, A] = flatMap(feOptionA)(fromOption(_, ifNone))
 
-  def asExceptionFallible[A](fa: F[Nothing, A]): F[Exception, A] = leftWiden(fa)
-
-  def asThrowableFallible[A](fa: F[Nothing, A]): F[Throwable, A] = leftWiden(fa)
-
 }
 
 object BifunctorMonad extends BifunctorMonadStaticOps {
   def apply[F[_, _] : BifunctorMonad]: BifunctorMonad[F] = implicitly[BifunctorMonad[F]]
 
   implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F])
-      extends Bifunctor.Ops[F, E, A](fea)(bifunctorMonad) {
+      extends Bifunctor.Ops[F, E, A](fea) {
     def flatMap[E2 >: E, B](f: A => F[E2, B]): F[E2, B] = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
     def forever: F[E, Nothing]                          = bifunctorMonad.forever(fea)
     def unit: F[E, Unit]                                = bifunctorMonad.unit(fea)
-
-    def asExceptionFallible(implicit ev: E =:= Nothing): F[Exception, A] =
-      bifunctorMonad.asExceptionFallible(fea.asInstanceOf[F[Nothing, A]])
-    def asThrowableFallible(implicit ev: E =:= Nothing): F[Throwable, A] =
-      bifunctorMonad.asThrowableFallible(fea.asInstanceOf[F[Nothing, A]])
   }
 
   implicit class FlattenOps[F[_, _], E1, E2 >: E1, A](

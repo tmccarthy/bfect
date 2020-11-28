@@ -29,8 +29,8 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
     override def leftMap[A, B, C](fab: F[A, B])(f: A => C): F[C, B] = bfectBifunctor.leftMap(fab)(f)
   }
 
-  class CatsMonadForBfectBifunctorMonad[F[+_, +_], E](implicit bfectBifunctorMonad: BifunctorMonad[F])
-      extends cats.Monad[F[E, +?]] {
+  class CatsMonadForBfectBifunctorMonad[F[_, _], E](implicit bfectBifunctorMonad: BifunctorMonad[F])
+      extends cats.Monad[F[E, ?]] {
     override def flatMap[A, A1](fea: F[E, A])(f: A => F[E, A1]): F[E, A1] =
       bfectBifunctorMonad.flatMap[E, E, A, A1](fea)(f)
 
@@ -40,7 +40,7 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
     override def pure[A](a: A): F[E, A] = bfectBifunctorMonad.rightPure(a)
   }
 
-  class CatsMonadErrorForBfectBME[F[+_, +_], E](implicit bfectBme: BME[F]) extends cats.MonadError[F[E, +?], E] {
+  class CatsMonadErrorForBfectBME[F[_, _], E](implicit bfectBme: BME[F]) extends cats.MonadError[F[E, ?], E] {
     override def flatMap[A, A1](fea: F[E, A])(f: A => F[E, A1]): F[E, A1] = bfectBme.flatMap[E, E, A, A1](fea)(f)
 
     override def tailRecM[A, A1](a: A)(f: A => F[E, Either[A, A1]]): F[E, A1] = bfectBme.tailRecM[E, A, A1](a)(f)
@@ -52,9 +52,9 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
     override def handleErrorWith[A](fea: F[E, A])(f: E => F[E, A]): F[E, A] = bfectBme.handleErrorWith(fea)(f)
   }
 
-  class CatsSyncForBfectSync[F[+_, +_]](implicit bfectBracket: Bracket[F], bfectSync: Sync[F])
+  class CatsSyncForBfectSync[F[_, _]](implicit bfectBracket: Bracket[F], bfectSync: Sync[F])
       extends CatsMonadErrorForBfectBME[F, Throwable]
-      with cats.effect.Sync[F[Throwable, +?]] {
+      with cats.effect.Sync[F[Throwable, ?]] {
     override def suspend[A](thunk: => F[Throwable, A]): F[Throwable, A] = bfectSync.suspend(thunk)
 
     override def bracketCase[A, B](
@@ -81,36 +81,36 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
     }
   }
 
-  class CatsAsyncForBfectAsync[F[+_, +_]](implicit bfectBracket: Bracket[F], bfectAsync: Async[F])
+  class CatsAsyncForBfectAsync[F[_, _]](implicit bfectBracket: Bracket[F], bfectAsync: Async[F])
       extends CatsSyncForBfectSync[F]
-      with cats.effect.Async[F[Throwable, +?]] {
+      with cats.effect.Async[F[Throwable, ?]] {
     override def async[A](k: (Either[Throwable, A] => Unit) => Unit): F[Throwable, A] = bfectAsync.async(k)
     override def asyncF[A](k: (Either[Throwable, A] => Unit) => F[Throwable, Unit]): F[Throwable, A] =
       bfectAsync.asyncF[Throwable, A](k.andThen(makeFailureUnchecked(_)))
   }
 
-  class CatsConcurrentForBfectConcurrent[F[+_, +_]](
+  class CatsConcurrentForBfectConcurrent[F[_, _]](
     implicit
     bfectBracket: Bracket[F],
     bfectAsync: Async[F],
     bfectConcurrent: Concurrent[F],
   ) extends CatsAsyncForBfectAsync
-      with cats.effect.Concurrent[F[Throwable, +?]] {
-    override def start[A](fa: F[Throwable, A]): F[Throwable, cats.effect.Fiber[F[Throwable, +?], A]] =
+      with cats.effect.Concurrent[F[Throwable, ?]] {
+    override def start[A](fa: F[Throwable, A]): F[Throwable, cats.effect.Fiber[F[Throwable, ?], A]] =
       bfectAsync.map(bfectConcurrent.start(fa))(asCatsFiber)
 
     override def racePair[A, B](
       fa: F[Throwable, A],
       fb: F[Throwable, B],
-    ): F[Throwable, Either[(A, cats.effect.Fiber[F[Throwable, +?], B]), (cats.effect.Fiber[F[Throwable, +?], A], B)]] =
+    ): F[Throwable, Either[(A, cats.effect.Fiber[F[Throwable, ?], B]), (cats.effect.Fiber[F[Throwable, ?], A], B)]] =
       bfectAsync.map(bfectConcurrent.racePair(fa, fb)) {
         case Left((a, bFiber))  => Left((a, asCatsFiber(bFiber)))
         case Right((aFiber, b)) => Right((asCatsFiber(aFiber), b))
       }
 
-    private def asCatsFiber[A](bfectFibre: Fibre[F, Throwable, A]): cats.effect.Fiber[F[Throwable, +?], A] =
-      new cats.effect.Fiber[F[Throwable, +?], A] {
-        override def cancel: cats.effect.CancelToken[F[Throwable, +?]] = bfectFibre.cancel
+    private def asCatsFiber[A](bfectFibre: Fibre[F, Throwable, A]): cats.effect.Fiber[F[Throwable, ?], A] =
+      new cats.effect.Fiber[F[Throwable, ?], A] {
+        override def cancel: cats.effect.CancelToken[F[Throwable, ?]] = bfectFibre.cancel
 
         override def join: F[Throwable, A] = bfectFibre.join
       }
@@ -119,11 +119,11 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
       bfectConcurrent.race(fa, fb)
 
     override def cancelable[A](
-      k: (Either[Throwable, A] => Unit) => cats.effect.CancelToken[F[Throwable, +?]],
+      k: (Either[Throwable, A] => Unit) => cats.effect.CancelToken[F[Throwable, ?]],
     ): F[Throwable, A] = bfectConcurrent.cancelable(k.andThen(makeFailureUnchecked(_)))
   }
 
-  private def makeFailureUnchecked[F[+_, +_], E, A](fea: F[E, A])(implicit syncInstance: Sync[F]): F[Nothing, A] =
+  private def makeFailureUnchecked[F[_, _], E, A](fea: F[E, A])(implicit syncInstance: Sync[F]): F[Nothing, A] =
     syncInstance.handleErrorWith(fea) {
       case t: Throwable => syncInstance.sync(throw t)
       case e            => syncInstance.sync(throw FailureInCancellationToken(e))
@@ -131,21 +131,21 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
 
   final case class FailureInCancellationToken[E](e: E) extends Exception
 
-  class CatsClockForBfectNow[F[+_, +_]](implicit bfectNow: Now[F], bFunctor: BFunctor[F])
-      extends cats.effect.Clock[F[Throwable, +?]] {
+  class CatsClockForBfectNow[F[_, _]](implicit bfectNow: Now[F], bFunctor: BFunctor[F])
+      extends cats.effect.Clock[F[Throwable, ?]] {
     import BFunctor.Ops
 
-    override def realTime(unit: TimeUnit): F[Throwable, Long] = bfectNow.now.map(_.toEpochMilli)
+    override def realTime(unit: TimeUnit): F[Throwable, Long] = Now.now[F].map(_.toEpochMilli).leftWiden
 
-    override def monotonic(unit: TimeUnit): F[Throwable, Long] = bfectNow.now.map(i => i.getEpochSecond * i.getNano)
+    override def monotonic(unit: TimeUnit): F[Throwable, Long] = Now.now[F].map(i => i.getEpochSecond * i.getNano).leftWiden
   }
 
-  class CatsTimerForBfectTimer[F[+_, +_]](implicit bfectTimer: Timer[F], bFunctor: BFunctor[F])
+  class CatsTimerForBfectTimer[F[_, _]](implicit bfectTimer: Timer[F], bFunctor: BFunctor[F])
       extends CatsClockForBfectNow[F]
-      with cats.effect.Timer[F[Throwable, +?]] {
-    override def clock: Clock[F[Throwable, +?]] = this
+      with cats.effect.Timer[F[Throwable, ?]] {
+    override def clock: Clock[F[Throwable, ?]] = this
 
-    override def sleep(duration: FiniteDuration): F[Throwable, Unit] = bfectTimer.sleep(duration)
+    override def sleep(duration: FiniteDuration): F[Throwable, Unit] = bFunctor.leftWiden(bfectTimer.sleep(duration))
   }
 
 }
@@ -156,16 +156,16 @@ trait BfectToCatsTypeclassConversions {
 
   // format: off
   implicit def bfectBifunctorIsCatsBifunctor[F[_, _] : Bifunctor]: cats.Bifunctor[F] = new CatsBifunctorForBfectBifunctor[F]()
-  implicit def bfectBifunctorMonadIsCatsMonad[F[+_, +_] : BifunctorMonad, E]: cats.Monad[F[E, +?]] = new CatsMonadForBfectBifunctorMonad[F, E]()
-  implicit def bfectBifunctorMonadErrorIsCatsMonadError[F[+_, +_] : BifunctorMonadError, E]: cats.MonadError[F[E, +?], E] = new CatsMonadErrorForBfectBME[F, E]()
-  implicit def bfectSyncIsCatsSync[F[+_, +_] : Sync : Bracket]: cats.effect.Sync[F[Throwable, +?]] = new CatsSyncForBfectSync[F]()
-  implicit def bfectAsyncIsCatsAsync[F[+_, +_] : Async : Bracket]: cats.effect.Async[F[Throwable, +?]] = new CatsAsyncForBfectAsync[F]()
-  implicit def bfectConcurrentIsCatsConcurrent[F[+_, +_] : Concurrent : Async : Bracket]: cats.effect.Concurrent[F[Throwable, +?]] = new CatsConcurrentForBfectConcurrent[F]()
+  implicit def bfectBifunctorMonadIsCatsMonad[F[_, _] : BifunctorMonad, E]: cats.Monad[F[E, ?]] = new CatsMonadForBfectBifunctorMonad[F, E]()
+  implicit def bfectBifunctorMonadErrorIsCatsMonadError[F[_, _] : BifunctorMonadError, E]: cats.MonadError[F[E, ?], E] = new CatsMonadErrorForBfectBME[F, E]()
+  implicit def bfectSyncIsCatsSync[F[_, _] : Sync : Bracket]: cats.effect.Sync[F[Throwable, ?]] = new CatsSyncForBfectSync[F]()
+  implicit def bfectAsyncIsCatsAsync[F[_, _] : Async : Bracket]: cats.effect.Async[F[Throwable, ?]] = new CatsAsyncForBfectAsync[F]()
+  implicit def bfectConcurrentIsCatsConcurrent[F[_, _] : Concurrent : Async : Bracket]: cats.effect.Concurrent[F[Throwable, ?]] = new CatsConcurrentForBfectConcurrent[F]()
   // format: on
 
-  implicit def bfectNowIsCatsClock[F[+_, +_] : Now : BFunctor]: cats.effect.Clock[F[Throwable, +?]] =
+  implicit def bfectNowIsCatsClock[F[_, _] : Now : BFunctor]: cats.effect.Clock[F[Throwable, ?]] =
     new CatsClockForBfectNow[F]()
-  implicit def bfectTimerIsCatsTimer[F[+_, +_] : Timer : BFunctor]: cats.effect.Timer[F[Throwable, +?]] =
+  implicit def bfectTimerIsCatsTimer[F[_, _] : Timer : BFunctor]: cats.effect.Timer[F[Throwable, ?]] =
     new CatsTimerForBfectTimer[F]()
 
 }
