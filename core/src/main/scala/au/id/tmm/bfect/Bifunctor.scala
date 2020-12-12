@@ -15,7 +15,17 @@
   */
 package au.id.tmm.bfect
 
-trait Bifunctor[F[_, _]] {
+trait Bifunctor[F[_, _]] extends BiInvariant[F] {
+
+  override def biImap[L1, L2, R1, R2](
+    fl1r1: F[L1, R1],
+  )(
+    fl1l2: L1 => L2,
+    fr1r2: R1 => R2,
+  )(
+    fl2l1: L2 => L1,
+    fr2r1: R2 => R1,
+  ): F[L2, R2] = biMap(fl1r1)(fl1l2, fr1r2)
 
   def biMap[L1, R1, L2, R2](f: F[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): F[L2, R2]
 
@@ -44,7 +54,8 @@ trait Bifunctor[F[_, _]] {
 object Bifunctor {
   def apply[F[_, _] : Bifunctor]: Bifunctor[F] = implicitly[Bifunctor[F]]
 
-  implicit class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {
+  implicit class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F])
+      extends BiInvariant.Ops[F, L, R](flr) {
     def biMap[L2, R2](leftF: L => L2, rightF: R => R2): F[L2, R2] = bifunctor.biMap(flr)(leftF, rightF)
     def rightMap[R2](rightF: R => R2): F[L, R2]                   = bifunctor.rightMap(flr)(rightF)
     def map[R2](rightF: R => R2): F[L, R2]                        = bifunctor.map(flr)(rightF)
