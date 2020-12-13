@@ -60,7 +60,33 @@ object Bracket extends BracketStaticOps {
       bracketCase[Unit, E, A](rightPure(()), { case (resource, exitCase) => finalizer(exitCase) }, _ => fea)
   }
 
-  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) {
+  trait ToBracketOps {
+    implicit def toBracketOps[F[_, _], E, A](fea: F[E, A])(implicit timerInstance: Bracket[F]): Ops[F, E, A] =
+      new Ops[F, E, A](fea)
+
+    implicit def toBracketOpsErrorNothing[F[_, _], A](
+      fea: F[Nothing, A],
+    )(implicit
+      timerInstance: Bracket[F],
+    ): Ops[F, Nothing, A] =
+      new Ops[F, Nothing, A](fea)
+
+    implicit def toBracketOpsValueNothing[F[_, _], E](
+      fea: F[E, Nothing],
+    )(implicit
+      timerInstance: Bracket[F],
+    ): Ops[F, E, Nothing] =
+      new Ops[F, E, Nothing](fea)
+
+    implicit def toBracketOpsErrorNothingValueNothing[F[_, _]](
+      fea: F[Nothing, Nothing],
+    )(implicit
+      timerInstance: Bracket[F],
+    ): Ops[F, Nothing, Nothing] =
+      new Ops[F, Nothing, Nothing](fea)
+  }
+
+  final class Ops[F[_, _], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) {
     def ensure(finalizer: F[Nothing, _]): F[E, A]                       = bracket.ensure(fea)(finalizer)
     def ensureCase(finalizer: ExitCase[E, A] => F[Nothing, _]): F[E, A] = bracket.ensureCase(fea)(finalizer)
   }

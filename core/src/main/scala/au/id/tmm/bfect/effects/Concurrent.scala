@@ -53,6 +53,32 @@ object Concurrent extends ConcurrentStaticOps with ConcurrentParNs {
       }
   }
 
+  trait ToConcurrentOps {
+    implicit def toConcurrentOps[F[_, _], E, A](fea: F[E, A])(implicit timerInstance: Concurrent[F]): Ops[F, E, A] =
+      new Ops[F, E, A](fea)
+
+    implicit def toConcurrentOpsErrorNothing[F[_, _], A](
+      fea: F[Nothing, A],
+    )(implicit
+      timerInstance: Concurrent[F],
+    ): Ops[F, Nothing, A] =
+      new Ops[F, Nothing, A](fea)
+
+    implicit def toConcurrentOpsValueNothing[F[_, _], E](
+      fea: F[E, Nothing],
+    )(implicit
+      timerInstance: Concurrent[F],
+    ): Ops[F, E, Nothing] =
+      new Ops[F, E, Nothing](fea)
+
+    implicit def toConcurrentOpsErrorNothingValueNothing[F[_, _]](
+      fea: F[Nothing, Nothing],
+    )(implicit
+      timerInstance: Concurrent[F],
+    ): Ops[F, Nothing, Nothing] =
+      new Ops[F, Nothing, Nothing](fea)
+  }
+
   implicit class Ops[F[_, _], E, A](protected val fea: F[E, A])(implicit concurrent: Concurrent[F]) {
     def start: F[Nothing, Fibre[F, E, A]] = concurrent.start(fea)
     def fork: F[Nothing, Fibre[F, E, A]]  = concurrent.fork(fea)
