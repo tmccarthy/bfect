@@ -44,7 +44,7 @@ trait Sync[F[_, _]] extends Die[F] {
 object Sync extends SyncStaticOps {
   def apply[F[_, _] : Sync]: Sync[F] = implicitly[Sync[F]]
 
-  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit sync: Sync[F]) extends Die.Ops[F, E, A](fea)
+  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit sync: Sync[F])
 
   implicit class CloseableOps[F[_, _], E, R](
     acquire: F[E, R],
