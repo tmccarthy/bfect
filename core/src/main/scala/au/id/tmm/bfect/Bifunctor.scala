@@ -56,8 +56,12 @@ trait Bifunctor[F[_, _]] extends BiInvariant[F] {
 object Bifunctor {
   def apply[F[_, _] : Bifunctor]: Bifunctor[F] = implicitly[Bifunctor[F]]
 
-  implicit class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F])
-      extends BiInvariant.Ops[F, L, R](flr) {
+  trait ToBifunctorOps {
+    implicit def toBiFunctorOps[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]): Ops[F, L, R] =
+      new Ops[F, L, R](flr)
+  }
+
+  class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {
     def biMap[L2, R2](leftF: L => L2, rightF: R => R2): F[L2, R2] = bifunctor.biMap(flr)(leftF, rightF)
     def rightMap[R2](rightF: R => R2): F[L, R2]                   = bifunctor.rightMap(flr)(rightF)
     def map[R2](rightF: R => R2): F[L, R2]                        = bifunctor.map(flr)(rightF)

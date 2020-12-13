@@ -7,5 +7,6 @@ object syntax {
 
   object biInvariantK extends BiInvariantK.ToBiInvariantKOps
   object biInvariant  extends BiInvariant.ToBiInvariantOps
+  object bifunctor    extends Bifunctor.ToBifunctorOps
 
 }
