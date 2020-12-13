@@ -6,6 +6,6 @@ object syntax {
   type ≈>[F[_, _], G[_, _]] = BiFunctionK[F, G]
 
   object biInvariantK extends BiInvariantK.ToBiInvariantKOps
-  object biInvariant extends BiInvariant.ToBiInvariantOps
+  object biInvariant  extends BiInvariant.ToBiInvariantOps
 
 }

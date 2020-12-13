@@ -12,7 +12,8 @@ object BiInvariantK {
   def apply[T[_[_, _]]](implicit T: BiInvariantK[T]): BiInvariantK[T] = implicitly
 
   trait ToBiInvariantKOps {
-    implicit def toBiInvariantKOps[T[_[_, _]], F[_, _]](tf: T[F])(implicit biInvariantK: BiInvariantK[T]): Ops[T, F] = new Ops(tf)
+    implicit def toBiInvariantKOps[T[_[_, _]], F[_, _]](tf: T[F])(implicit biInvariantK: BiInvariantK[T]): Ops[T, F] =
+      new Ops(tf)
   }
 
   final class Ops[T[_[_, _]], F[_, _]](tf: T[F])(implicit biInvariantK: BiInvariantK[T]) {

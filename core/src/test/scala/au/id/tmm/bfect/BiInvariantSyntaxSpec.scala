@@ -9,7 +9,9 @@ class BiInvariantSyntaxSpec extends AnyFlatSpec {
   "the syntax for biInvariant" should "compile" in {
     val either: WrappedEither[String, Int] = WrappedEither(Right(1))
 
-    either.biImap(s => Wrapped(s), i => Wrapped(i))(ws => ws.unwrap, wi => wi.unwrap): WrappedEither[Wrapped[String], Wrapped[Int]]
+    either.biImap(s => Wrapped(s), i => Wrapped(i))(ws => ws.unwrap, wi => wi.unwrap): WrappedEither[
+      Wrapped[String],
+      Wrapped[Int]]
   }
 
 }

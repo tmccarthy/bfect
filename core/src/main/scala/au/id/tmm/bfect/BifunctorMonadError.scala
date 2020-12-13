@@ -54,27 +54,28 @@ object BifunctorMonadError extends BifunctorMonadErrorStaticOps {
     def catchLeft[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A]   = bme.catchLeft[E, A, E2](fea)(catchPf)
   }
 
-  implicit val bifunctorMonadErrorBiInvariantK: BiInvariantK[BifunctorMonadError] = new BiInvariantK[BifunctorMonadError] {
-    override def biImapK[F[_, _], G[_, _]](F: BME[F])(fFG: F ≈> G)(fGF: G ≈> F): BME[G] = new BME[G] {
-      override def rightPure[E, A](a: A): G[E, A] = fFG(F.rightPure(a))
+  implicit val bifunctorMonadErrorBiInvariantK: BiInvariantK[BifunctorMonadError] =
+    new BiInvariantK[BifunctorMonadError] {
+      override def biImapK[F[_, _], G[_, _]](F: BME[F])(fFG: F ≈> G)(fGF: G ≈> F): BME[G] = new BME[G] {
+        override def rightPure[E, A](a: A): G[E, A] = fFG(F.rightPure(a))
 
-      override def leftPure[E, A](e: E): G[E, A] = fFG(F.leftPure(e))
+        override def leftPure[E, A](e: E): G[E, A] = fFG(F.leftPure(e))
 
-      override def flatMap[E1, E2 >: E1, A, B](ge1a: G[E1, A])(fage2b: A => G[E2, B]): G[E2, B] =
-        fFG(F.flatMap[E1, E2, A, B](fGF(ge1a))(fage2b.andThen(ge2b => fGF(ge2b))))
+        override def flatMap[E1, E2 >: E1, A, B](ge1a: G[E1, A])(fage2b: A => G[E2, B]): G[E2, B] =
+          fFG(F.flatMap[E1, E2, A, B](fGF(ge1a))(fage2b.andThen(ge2b => fGF(ge2b))))
 
-      override def tailRecM[E, A, A1](a: A)(f: A => G[E, Either[A, A1]]): G[E, A1] =
-        fFG(F.tailRecM(a)(f.andThen { g: G[E, Either[A, A1]] =>
-          fGF(g)
-        }))
+        override def tailRecM[E, A, A1](a: A)(f: A => G[E, Either[A, A1]]): G[E, A1] =
+          fFG(F.tailRecM(a)(f.andThen { g: G[E, Either[A, A1]] =>
+            fGF(g)
+          }))
 
-      override def biMap[L1, R1, L2, R2](g: G[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): G[L2, R2] =
-        fFG(F.biMap(fGF(g))(leftF, rightF))
+        override def biMap[L1, R1, L2, R2](g: G[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): G[L2, R2] =
+          fFG(F.biMap(fGF(g))(leftF, rightF))
 
-      override def handleErrorWith[E1, A, E2](gea: G[E1, A])(f: E1 => G[E2, A]): G[E2, A] =
-        fFG(F.handleErrorWith[E1, A, E2](fGF(gea))(f.andThen(g => fGF(g))))
+        override def handleErrorWith[E1, A, E2](gea: G[E1, A])(f: E1 => G[E2, A]): G[E2, A] =
+          fFG(F.handleErrorWith[E1, A, E2](fGF(gea))(f.andThen(g => fGF(g))))
+      }
     }
-  }
 
 }
 

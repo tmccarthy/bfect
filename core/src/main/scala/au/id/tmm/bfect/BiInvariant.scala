@@ -19,7 +19,11 @@ object BiInvariant {
   def apply[F[_, _] : BiInvariant]: BiInvariant[F] = implicitly
 
   trait ToBiInvariantOps {
-    implicit def toBiInvariantOps[F[_, _], L1, R1](fl1r1: F[L1, R1])(implicit biInvariant: BiInvariant[F]): Ops[F, L1, R1] =
+    implicit def toBiInvariantOps[F[_, _], L1, R1](
+      fl1r1: F[L1, R1],
+    )(implicit
+      biInvariant: BiInvariant[F],
+    ): Ops[F, L1, R1] =
       new Ops[F, L1, R1](fl1r1)
   }
 

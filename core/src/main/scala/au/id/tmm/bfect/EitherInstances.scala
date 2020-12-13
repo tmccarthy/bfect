@@ -20,7 +20,15 @@ import scala.annotation.tailrec
 object EitherInstanceImpls {
 
   class BiInvariantInstance extends BiInvariant[Either] {
-    override def biImap[L1, L2, R1, R2](fl1r1: Either[L1, R1])(fl1l2: L1 => L2, fr1r2: R1 => R2)(fl2l1: L2 => L1, fr2r1: R2 => R1): Either[L2, R2] =
+    override def biImap[L1, L2, R1, R2](
+      fl1r1: Either[L1, R1],
+    )(
+      fl1l2: L1 => L2,
+      fr1r2: R1 => R2,
+    )(
+      fl2l1: L2 => L1,
+      fr2r1: R2 => R1,
+    ): Either[L2, R2] =
       fl1r1 match {
         case Left(l1)  => Left(fl1l2(l1))
         case Right(r1) => Right(fr1r2(r1))
