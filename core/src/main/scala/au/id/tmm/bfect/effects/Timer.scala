@@ -73,13 +73,25 @@ object Timer extends TimerStaticOps {
     implicit def toTimerOps[F[_, _], E, A](fea: F[E, A])(implicit timerInstance: Timer[F]): Ops[F, E, A] =
       new Ops[F, E, A](fea)
 
-    implicit def toTimerOpsErrorNothing[F[_, _], A](fea: F[Nothing, A])(implicit timerInstance: Timer[F]): Ops[F, Nothing, A] =
+    implicit def toTimerOpsErrorNothing[F[_, _], A](
+      fea: F[Nothing, A],
+    )(implicit
+      timerInstance: Timer[F],
+    ): Ops[F, Nothing, A] =
       new Ops[F, Nothing, A](fea)
 
-    implicit def toTimerOpsValueNothing[F[_, _], E](fea: F[E, Nothing])(implicit timerInstance: Timer[F]): Ops[F, E, Nothing] =
+    implicit def toTimerOpsValueNothing[F[_, _], E](
+      fea: F[E, Nothing],
+    )(implicit
+      timerInstance: Timer[F],
+    ): Ops[F, E, Nothing] =
       new Ops[F, E, Nothing](fea)
 
-    implicit def toTimerOpsErrorNothingValueNothing[F[_, _]](fea: F[Nothing, Nothing])(implicit timerInstance: Timer[F]): Ops[F, Nothing, Nothing] =
+    implicit def toTimerOpsErrorNothingValueNothing[F[_, _]](
+      fea: F[Nothing, Nothing],
+    )(implicit
+      timerInstance: Timer[F],
+    ): Ops[F, Nothing, Nothing] =
       new Ops[F, Nothing, Nothing](fea)
   }
 

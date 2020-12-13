@@ -57,7 +57,11 @@ object Die extends DieStaticOps {
     implicit def toDieOpsValueNothing[F[_, _], E](fea: F[E, Nothing])(implicit die: Die[F]): Ops[F, E, Nothing] =
       new Ops[F, E, Nothing](fea)
 
-    implicit def toDieOpsErrorNothingValueNothing[F[_, _]](fea: F[Nothing, Nothing])(implicit die: Die[F]): Ops[F, Nothing, Nothing] =
+    implicit def toDieOpsErrorNothingValueNothing[F[_, _]](
+      fea: F[Nothing, Nothing],
+    )(implicit
+      die: Die[F],
+    ): Ops[F, Nothing, Nothing] =
       new Ops[F, Nothing, Nothing](fea)
   }
 
