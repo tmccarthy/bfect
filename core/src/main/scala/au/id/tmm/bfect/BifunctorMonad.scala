@@ -15,7 +15,7 @@
   */
 package au.id.tmm.bfect
 
-import au.id.tmm.bfect.syntax.≈>
+import au.id.tmm.bfect.syntax.biFunctionK.≈>
 
 import scala.util.Try
 

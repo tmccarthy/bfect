@@ -4,9 +4,7 @@ import au.id.tmm.bfect.effects._
 
 object syntax {
 
-  //noinspection NonAsciiCharacters
-  // TODO should move
-  type ≈>[F[_, _], G[_, _]] = BiFunctionK[F, G]
+  object biFunctionK extends BiFunctionK.Syntax
 
   object biInvariantK        extends BiInvariantK.ToBiInvariantKOps
   object biInvariant         extends BiInvariant.ToBiInvariantOps
@@ -23,6 +21,7 @@ object syntax {
 
   object all
       extends AnyRef
+      with BiFunctionK.Syntax
       with BiInvariantK.ToBiInvariantKOps
       with BiInvariant.ToBiInvariantOps
       with Bifunctor.ToBifunctorOps

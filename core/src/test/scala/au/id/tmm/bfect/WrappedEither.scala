@@ -1,6 +1,6 @@
 package au.id.tmm.bfect
 
-import au.id.tmm.bfect.syntax.≈>
+import au.id.tmm.bfect.syntax.biFunctionK.≈>
 import au.id.tmm.bfect.syntax.biInvariantK._
 
 /**
