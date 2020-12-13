@@ -59,6 +59,27 @@ object Bifunctor {
   trait ToBifunctorOps {
     implicit def toBiFunctorOps[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]): Ops[F, L, R] =
       new Ops[F, L, R](flr)
+
+    implicit def toBiFunctorOpsLeftNothing[F[_, _], R](
+      flr: F[Nothing, R],
+    )(implicit
+      bifunctor: Bifunctor[F],
+    ): Ops[F, Nothing, R] =
+      new Ops[F, Nothing, R](flr)
+
+    implicit def toBiFunctorOpsRightNothing[F[_, _], L](
+      flr: F[L, Nothing],
+    )(implicit
+      bifunctor: Bifunctor[F],
+    ): Ops[F, L, Nothing] =
+      new Ops[F, L, Nothing](flr)
+
+    implicit def toBiFunctorOpsLeftNothingRightNothing[F[_, _]](
+      flr: F[Nothing, Nothing],
+    )(implicit
+      bifunctor: Bifunctor[F],
+    ): Ops[F, Nothing, Nothing] =
+      new Ops[F, Nothing, Nothing](flr)
   }
 
   final class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {

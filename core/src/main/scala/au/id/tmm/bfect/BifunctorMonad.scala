@@ -92,6 +92,27 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
     ): Ops[F, E, A] =
       new Ops(fea)
 
+    implicit def toBifunctorMonadOpsErrorNothing[F[_, _], A](
+      fea: F[Nothing, A],
+    )(implicit
+      bifunctorMonad: BifunctorMonad[F],
+    ): Ops[F, Nothing, A] =
+      new Ops[F, Nothing, A](fea)
+
+    implicit def toBifunctorMonadOpsValueNothing[F[_, _], E](
+      fea: F[E, Nothing],
+    )(implicit
+      bifunctorMonad: BifunctorMonad[F],
+    ): Ops[F, E, Nothing] =
+      new Ops[F, E, Nothing](fea)
+
+    implicit def toBifunctorMonadOpsErrorNothingValueNothing[F[_, _]](
+      fea: F[Nothing, Nothing],
+    )(implicit
+      bifunctorMonad: BifunctorMonad[F],
+    ): Ops[F, Nothing, Nothing] =
+      new Ops[F, Nothing, Nothing](fea)
+
     implicit def toBifunctorMonadFlattenOps[F[_, _], E1, E2 >: E1, A](
       fefea: F[E1, F[E2, A]],
     )(implicit
@@ -126,6 +147,13 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
       bMonad: BMonad[F],
     ): AbsolveOptionOps[F, E, A] =
       new AbsolveOptionOps[F, E, A](feOptionA)
+
+    implicit def toBifunctorMonadAbsolveOptionNothingErrorOps[F[_, _], A](
+      feOptionA: F[Nothing, Option[A]],
+    )(implicit
+      bMonad: BMonad[F],
+    ): AbsolveOptionOps[F, Nothing, A] =
+      new AbsolveOptionOps[F, Nothing, A](feOptionA)
   }
 
   final class Ops[F[_, _], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F]) {
