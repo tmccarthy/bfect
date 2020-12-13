@@ -47,7 +47,7 @@ trait Die[F[_, _]] extends BME[F] {
 object Die extends DieStaticOps {
   def apply[F[_, _] : Die]: Die[F] = implicitly[Die[F]]
 
-  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit die: Die[F]) extends BME.Ops[F, E, A](fea) {
+  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit die: Die[F]) {
     def orDie(implicit ev: E <:< Throwable): F[Nothing, A] = die.orDie(fea)
     def refineOrDie[E2](refinePf: PartialFunction[E, E2])(implicit ev: E <:< Throwable): F[E2, A] =
       die.refineOrDie[E, A, E2](fea)(refinePf)

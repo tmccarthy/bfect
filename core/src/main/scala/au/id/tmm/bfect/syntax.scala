@@ -9,5 +9,6 @@ object syntax {
   object biInvariant    extends BiInvariant.ToBiInvariantOps
   object bifunctor      extends Bifunctor.ToBifunctorOps
   object bifunctorMonad extends BifunctorMonad.ToBifunctorMonadOps
+  object bifunctorMonadError extends BifunctorMonadError.ToBifunctorMonadErrorOps
 
 }
