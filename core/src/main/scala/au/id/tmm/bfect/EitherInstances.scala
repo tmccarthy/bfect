@@ -19,6 +19,14 @@ import scala.annotation.tailrec
 
 object EitherInstanceImpls {
 
+  class BiInvariantInstance extends BiInvariant[Either] {
+    override def biImap[L1, L2, R1, R2](fl1r1: Either[L1, R1])(fl1l2: L1 => L2, fr1r2: R1 => R2)(fl2l1: L2 => L1, fr2r1: R2 => R1): Either[L2, R2] =
+      fl1r1 match {
+        case Left(l1)  => Left(fl1l2(l1))
+        case Right(r1) => Right(fr1r2(r1))
+      }
+  }
+
   class BifunctorInstance extends Bifunctor[Either] {
     override def biMap[L1, R1, L2, R2](f: Either[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): Either[L2, R2] =
       f.fold(leftF.andThen(Left.apply), rightF.andThen(Right.apply))
@@ -53,16 +61,21 @@ object EitherInstanceImpls {
 
 }
 
-trait LowPriorityEitherInstances {
+trait EitherInstances3 {
+  implicit val biInvariantInstance: BiInvariant[Either] = new EitherInstanceImpls.BiInvariantInstance()
+}
+
+trait EitherInstances2 extends EitherInstances3 {
   implicit val biFunctorInstance: Bifunctor[Either] = new EitherInstanceImpls.BifunctorInstance()
 }
 
-trait MiddlePriorityEitherInstances extends LowPriorityEitherInstances {
+trait EitherInstances1 extends EitherInstances2 {
   implicit val biFunctorMonadInstance: BifunctorMonad[Either] = new EitherInstanceImpls.BifunctorMonadInstance()
 }
 
-trait HighPriorityEitherInstances extends MiddlePriorityEitherInstances {
+trait EitherInstances0 extends EitherInstances1 {
   implicit val bmeInstance: BifunctorMonadError[Either] = new EitherInstanceImpls.BMEInstance()
 }
 
-object EitherInstances extends HighPriorityEitherInstances
+// TODO these aren't being resolved properly
+object EitherInstances extends EitherInstances0

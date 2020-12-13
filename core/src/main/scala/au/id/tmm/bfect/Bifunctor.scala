@@ -15,6 +15,8 @@
   */
 package au.id.tmm.bfect
 
+import au.id.tmm.bfect.syntax.≈>
+
 trait Bifunctor[F[_, _]] extends BiInvariant[F] {
 
   override def biImap[L1, L2, R1, R2](
@@ -70,5 +72,12 @@ object Bifunctor {
       bifunctor.asExceptionFallible(flr.asInstanceOf[F[Nothing, R]])
     @inline def asThrowableFallible(implicit ev: L =:= Nothing): F[Throwable, R] =
       bifunctor.asThrowableFallible(flr.asInstanceOf[F[Nothing, R]])
+  }
+
+  implicit val bifunctorBiInvariantK: BiInvariantK[Bifunctor] = new BiInvariantK[Bifunctor] {
+    override def biImapK[F[_, _], G[_, _]](F: Bifunctor[F])(fFG: F ≈> G)(fGF: G ≈> F): Bifunctor[G] = new BFunctor[G] {
+      override def biMap[L1, R1, L2, R2](g: G[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): G[L2, R2] =
+        fFG(F.biMap(fGF(g))(leftF, rightF))
+    }
   }
 }
