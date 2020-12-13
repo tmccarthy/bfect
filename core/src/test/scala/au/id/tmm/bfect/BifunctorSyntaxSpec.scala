@@ -44,4 +44,13 @@ class BifunctorSyntaxSpec extends AnyFlatSpec {
     either.leftWiden[Any]: WrappedEither[Any, Nothing]
   }
 
+  it should "compile when both types are Nothing" in intercept[NotImplementedError] {
+    val either: WrappedEither[Nothing, Nothing] = throw new NotImplementedError
+
+    either.biWiden[Any, Any]: WrappedEither[Any, Any]
+    either.rightWiden[Any]: WrappedEither[Int, Any]
+    either.widen[Any]: WrappedEither[Int, Any]
+    either.leftWiden[Any]: WrappedEither[Any, Nothing]
+  }
+
 }

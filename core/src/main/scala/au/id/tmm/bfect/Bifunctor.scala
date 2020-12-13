@@ -61,7 +61,7 @@ object Bifunctor {
       new Ops[F, L, R](flr)
   }
 
-  class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {
+  final class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {
     def biMap[L2, R2](leftF: L => L2, rightF: R => R2): F[L2, R2] = bifunctor.biMap(flr)(leftF, rightF)
     def rightMap[R2](rightF: R => R2): F[L, R2]                   = bifunctor.rightMap(flr)(rightF)
     def map[R2](rightF: R => R2): F[L, R2]                        = bifunctor.map(flr)(rightF)
