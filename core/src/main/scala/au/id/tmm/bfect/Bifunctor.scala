@@ -39,6 +39,16 @@ trait Bifunctor[F[_, _]] extends BiInvariant[F] {
 
   def mapError[L1, R, L2](f: F[L1, R])(leftF: L1 => L2): F[L2, R] = leftMap(f)(leftF)
 
+  def biAs[L1, L2, R1, R2](fl1r1: F[L1, R1])(l2: L2, r2: R2): F[L2, R2] = biMap(fl1r1)(_ => l2, _ => r2)
+
+  def rightAs[L, R1, R2](flr1: F[L, R1])(r2: R2): F[L, R2] = rightMap(flr1)(_ => r2)
+
+  def as[L, R1, R2](flr1: F[L, R1])(r2: R2): F[L, R2] = rightAs(flr1)(r2)
+
+  def unit[L, R](flr: F[L, R]): F[L, Unit] = rightAs(flr)(())
+
+  def leftAs[L1, L2, R](fl1r: F[L1, R])(l2: L2): F[L2, R] = leftMap(fl1r)(_ => l2)
+
   @inline def biWiden[L1, L2 >: L1, R1, R2 >: R1](f: F[L1, R1]): F[L2, R2] = f.asInstanceOf[F[L2, R2]]
 
   @inline def rightWiden[L, R1, R2 >: R1](f: F[L, R1]): F[L, R2] = f.asInstanceOf[F[L, R2]]
@@ -88,6 +98,11 @@ object Bifunctor {
     def map[R2](rightF: R => R2): F[L, R2]                        = bifunctor.map(flr)(rightF)
     def leftMap[L2](leftF: L => L2): F[L2, R]                     = bifunctor.leftMap(flr)(leftF)
     def mapError[L2](leftF: L => L2): F[L2, R]                    = bifunctor.mapError(flr)(leftF)
+    def biAs[L2, R2](l2: L2, r2: R2): F[L2, R2]                   = bifunctor.biAs(flr)(l2, r2)
+    def rightAs[R2](r2: R2): F[L, R2]                             = bifunctor.rightAs(flr)(r2)
+    def as[R2](r2: R2): F[L, R2]                                  = bifunctor.as(flr)(r2)
+    def unit: F[L, Unit]                                          = bifunctor.unit(flr)
+    def leftAs[L2](l2: L2): F[L2, R]                              = bifunctor.leftAs(flr)(l2)
     @inline def biWiden[L2 >: L, R2 >: R]: F[L2, R2]              = bifunctor.biWiden(flr)
     @inline def rightWiden[R2 >: R]: F[L, R2]                     = bifunctor.rightWiden(flr)
     @inline def widen[R2 >: R]: F[L, R2]                          = bifunctor.widen(flr)
