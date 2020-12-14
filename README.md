@@ -41,11 +41,15 @@ Note that unlike in cats, `Bracket` and `Concurrent` are not part of the main in
 
 ## Usage
 
-Import syntax from `au.id.tmm.bfect.syntax.all._`
+Use the following imports:
+
+* `import au.id.tmm.bfect.syntax.all._` for extension methods
+* `import au.id.tmm.bfect.instances.all._` for instances
+* `import au.id.tmm.bfect.implicits._` for everything
 
 ```scala
 import au.id.tmm.bfect.effects.Sync
-import au.id.tmm.bfect.syntax.all._
+import au.id.tmm.bfect.implicits._
 
 // Companion objects provide static methods:
 
