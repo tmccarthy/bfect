@@ -20,7 +20,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 class BfectToCatsTypeclassConversionsSpec extends AnyFlatSpec {
 
   "the monad instance" should "be resolved without difficulty" in {
-    import au.id.tmm.bfect.EitherInstances._
+    import au.id.tmm.bfect.instances.either._
 
     cats.Monad[Either[Nothing, ?]]
 
@@ -28,7 +28,7 @@ class BfectToCatsTypeclassConversionsSpec extends AnyFlatSpec {
   }
 
   "the MonadError instance" should "be resolved without difficulty" in {
-    import au.id.tmm.bfect.EitherInstances._
+    import au.id.tmm.bfect.instances.either._
 
     cats.MonadError[Either[Nothing, ?], Nothing]
 

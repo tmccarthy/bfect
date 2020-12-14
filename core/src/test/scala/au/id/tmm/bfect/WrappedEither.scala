@@ -1,5 +1,6 @@
 package au.id.tmm.bfect
 
+import au.id.tmm.bfect.instances.either._
 import au.id.tmm.bfect.syntax.biFunctionK.≈>
 import au.id.tmm.bfect.syntax.biInvariantK._
 
@@ -20,6 +21,6 @@ object WrappedEither {
       override def apply[L, R](flr: WrappedEither[L, R]): Either[L, R] = flr.either
     }
 
-    EitherInstances.bmeInstance.biImapK[WrappedEither](wrap)(unwrap)
+    BifunctorMonadError[Either].biImapK[WrappedEither](wrap)(unwrap)
   }
 }
