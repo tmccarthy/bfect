@@ -16,12 +16,11 @@
 package au.id.tmm.bfect
 
 import au.id.tmm.bfect.BifunctorMonadSpec._
+import au.id.tmm.bfect.instances.either._
+import au.id.tmm.bfect.syntax.bifunctorMonad._
 import org.scalatest.flatspec.AnyFlatSpec
 
 class BifunctorMonadSpec extends AnyFlatSpec {
-
-  import BifunctorMonad._
-  import EitherInstances.biFunctorMonadInstance
 
   "absolve" should "absolve when the outer error type is Nothing" in {
     val nestedEither: Either[Nothing, Either[ChildError, Unit]] = Right(Right(()))
@@ -61,14 +60,6 @@ class BifunctorMonadSpec extends AnyFlatSpec {
     val absolved: Either[ParentError, Unit] = eitherOption.absolveOption(ParentError.Instance)
 
     assert(absolved === Right(()))
-  }
-
-  "asThrowableFallible" should "compile when the error type is nothing" in {
-    import BifunctorMonad.Ops
-
-    val pure: Either[Nothing, Unit] = Right(())
-
-    assert(pure.asThrowableFallible === Right(()))
   }
 
 }

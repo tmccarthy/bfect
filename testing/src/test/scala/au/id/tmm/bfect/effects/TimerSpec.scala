@@ -17,7 +17,7 @@ package au.id.tmm.bfect.effects
 
 import java.time.{Duration, Instant}
 
-import au.id.tmm.bfect.effects.Timer.Ops
+import au.id.tmm.bfect.syntax.timer._
 import au.id.tmm.bfect.effects.TimerSpec.{TimerTestIO, TimerTestState, dummyTask}
 import au.id.tmm.bfect.testing.BState
 import org.scalatest.flatspec.AnyFlatSpec

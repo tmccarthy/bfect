@@ -15,6 +15,8 @@
   */
 package au.id.tmm.bfect
 
+import au.id.tmm.bfect.syntax.biFunctionK.≈>
+
 import scala.util.Try
 
 trait BifunctorMonad[F[_, _]] extends Bifunctor[F] {
@@ -72,9 +74,8 @@ trait BifunctorMonad[F[_, _]] extends Bifunctor[F] {
     */
   def tailRecM[E, A, A1](a: A)(f: A => F[E, Either[A, A1]]): F[E, A1]
 
-  def unit[E, A](fea: F[E, A]): F[E, Unit] = flatMap(fea)(_ => unit)
-
-  def absolve[E, A](fEitherEA: F[E, Either[E, A]]): F[E, A] = flatMap(fEitherEA)(fromEither)
+  def absolve[E, E2 >: E, A](fEitherEA: F[E, Either[E2, A]]): F[E2, A] =
+    flatMap[E, E2, Either[E2, A], A](fEitherEA)(fromEither)
 
   def absolveOption[E, A](feOptionA: F[E, Option[A]], ifNone: => E): F[E, A] = flatMap(feOptionA)(fromOption(_, ifNone))
 
@@ -83,14 +84,84 @@ trait BifunctorMonad[F[_, _]] extends Bifunctor[F] {
 object BifunctorMonad extends BifunctorMonadStaticOps {
   def apply[F[_, _] : BifunctorMonad]: BifunctorMonad[F] = implicitly[BifunctorMonad[F]]
 
-  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F])
-      extends Bifunctor.Ops[F, E, A](fea) {
-    def flatMap[E2 >: E, B](f: A => F[E2, B]): F[E2, B] = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
-    def forever: F[E, Nothing]                          = bifunctorMonad.forever(fea)
-    def unit: F[E, Unit]                                = bifunctorMonad.unit(fea)
+  trait ToBifunctorMonadOps {
+    implicit def toBifunctorMonadOps[F[_, _], E, A](
+      fea: F[E, A],
+    )(implicit
+      bifunctorMonad: BifunctorMonad[F],
+    ): Ops[F, E, A] =
+      new Ops(fea)
+
+    implicit def toBifunctorMonadOpsErrorNothing[F[_, _], A](
+      fea: F[Nothing, A],
+    )(implicit
+      bifunctorMonad: BifunctorMonad[F],
+    ): Ops[F, Nothing, A] =
+      new Ops[F, Nothing, A](fea)
+
+    implicit def toBifunctorMonadOpsValueNothing[F[_, _], E](
+      fea: F[E, Nothing],
+    )(implicit
+      bifunctorMonad: BifunctorMonad[F],
+    ): Ops[F, E, Nothing] =
+      new Ops[F, E, Nothing](fea)
+
+    implicit def toBifunctorMonadOpsErrorNothingValueNothing[F[_, _]](
+      fea: F[Nothing, Nothing],
+    )(implicit
+      bifunctorMonad: BifunctorMonad[F],
+    ): Ops[F, Nothing, Nothing] =
+      new Ops[F, Nothing, Nothing](fea)
+
+    implicit def toBifunctorMonadFlattenOps[F[_, _], E1, E2 >: E1, A](
+      fefea: F[E1, F[E2, A]],
+    )(implicit
+      bifunctorMonad: BifunctorMonad[F],
+    ): FlattenOps[F, E1, E2, A] =
+      new FlattenOps[F, E1, E2, A](fefea)
+
+    implicit def toBifunctorMonadAbsolveOps[F[_, _], E, E2 >: E, A](
+      fEitherEA: F[E, Either[E2, A]],
+    )(implicit
+      bMonad: BMonad[F],
+    ): AbsolveOps[F, E, E2, A] =
+      new AbsolveOps[F, E, E2, A](fEitherEA)
+
+    implicit def toBifunctorMonadAbsolveNothingErrorOps[F[_, _], E2, A](
+      fEitherEA: F[Nothing, Either[E2, A]],
+    )(implicit
+      bMonad: BMonad[F],
+    ): AbsolveOps[F, Nothing, E2, A] =
+      new AbsolveOps[F, Nothing, E2, A](fEitherEA)
+
+    implicit def toBifunctorMonadAbsolveNothingValueOps[F[_, _], E, E2 >: E](
+      fEitherEA: F[E, Either[E2, Nothing]],
+    )(implicit
+      bMonad: BMonad[F],
+    ): AbsolveOps[F, E, E2, Nothing] =
+      new AbsolveOps[F, E, E2, Nothing](fEitherEA)
+
+    implicit def toBifunctorMonadAbsolveOptionOps[F[_, _], E, A](
+      feOptionA: F[E, Option[A]],
+    )(implicit
+      bMonad: BMonad[F],
+    ): AbsolveOptionOps[F, E, A] =
+      new AbsolveOptionOps[F, E, A](feOptionA)
+
+    implicit def toBifunctorMonadAbsolveOptionNothingErrorOps[F[_, _], A](
+      feOptionA: F[Nothing, Option[A]],
+    )(implicit
+      bMonad: BMonad[F],
+    ): AbsolveOptionOps[F, Nothing, A] =
+      new AbsolveOptionOps[F, Nothing, A](feOptionA)
   }
 
-  implicit class FlattenOps[F[_, _], E1, E2 >: E1, A](
+  final class Ops[F[_, _], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F]) {
+    def flatMap[E2 >: E, B](f: A => F[E2, B]): F[E2, B] = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
+    def forever: F[E, Nothing]                          = bifunctorMonad.forever(fea)
+  }
+
+  final class FlattenOps[F[_, _], E1, E2 >: E1, A](
     fefea: F[E1, F[E2, A]],
   )(implicit
     bifunctorMonad: BifunctorMonad[F],
@@ -98,12 +169,32 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
     def flatten: F[E2, A] = bifunctorMonad.flatten[E1, E2, A](fefea)
   }
 
-  implicit class AbsolveOps[F[_, _], E, A](fEitherEA: F[E, Either[E, A]])(implicit bMonad: BMonad[F]) {
-    def absolve: F[E, A] = bMonad.absolve(fEitherEA)
+  final class AbsolveOps[F[_, _], E, E2 >: E, A](fEitherEA: F[E, Either[E2, A]])(implicit bMonad: BMonad[F]) {
+    def absolve: F[E2, A] = bMonad.absolve(fEitherEA)
   }
 
-  implicit class AbsolveOptionOps[F[_, _], E, A](feOptionA: F[E, Option[A]])(implicit bMonad: BMonad[F]) {
-    def absolveOption[E2 >: E](ifNone: => E2): F[E2, A] = bMonad.absolveOption[E2, A](feOptionA.leftWiden, ifNone)
+  final class AbsolveOptionOps[F[_, _], E, A](feOptionA: F[E, Option[A]])(implicit bMonad: BMonad[F]) {
+    def absolveOption[E2 >: E](ifNone: => E2): F[E2, A] =
+      bMonad.absolveOption[E2, A](bMonad.leftWiden(feOptionA), ifNone)
+  }
+
+  implicit val bifunctorMonadBiInvariantK: BiInvariantK[BifunctorMonad] = new BiInvariantK[BMonad] {
+    override def biImapK[F[_, _], G[_, _]](F: BMonad[F])(fFG: F ≈> G)(fGF: G ≈> F): BMonad[G] = new BMonad[G] {
+      override def rightPure[E, A](a: A): G[E, A] = fFG(F.rightPure(a))
+
+      override def leftPure[E, A](e: E): G[E, A] = fFG(F.leftPure(e))
+
+      override def flatMap[E1, E2 >: E1, A, B](ge1a: G[E1, A])(fage2b: A => G[E2, B]): G[E2, B] =
+        fFG(F.flatMap[E1, E2, A, B](fGF(ge1a))(fage2b.andThen(ge2b => fGF(ge2b))))
+
+      override def tailRecM[E, A, A1](a: A)(f: A => G[E, Either[A, A1]]): G[E, A1] =
+        fFG(F.tailRecM(a)(f.andThen { g: G[E, Either[A, A1]] =>
+          fGF(g)
+        }))
+
+      override def biMap[L1, R1, L2, R2](g: G[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): G[L2, R2] =
+        fFG(F.biMap(fGF(g))(leftF, rightF))
+    }
   }
 
 }

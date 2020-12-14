@@ -41,32 +41,34 @@ Note that unlike in cats, `Bracket` and `Concurrent` are not part of the main in
 
 ## Usage
 
-Most typeclasses come with an `Ops` implicit class on the companion object. Generally if you are using
-a typeclass you will import it and the `Ops` like so:
+Use the following imports:
+
+* `import au.id.tmm.bfect.syntax.all._` for extension methods
+* `import au.id.tmm.bfect.instances.all._` for instances
+* `import au.id.tmm.bfect.implicits._` for everything
 
 ```scala
 import au.id.tmm.bfect.effects.Sync
-import au.id.tmm.bfect.effects.Sync.Ops
+import au.id.tmm.bfect.implicits._
 
 // Companion objects provide static methods:
 
-def hello1[F[+_, +_] : Sync]: F[Nothing, String] = Sync[F].pure("hello")
-def hello2[F[+_, +_] : Sync]: F[Nothing, String] = Sync.pure("hello")
+def hello1[F[_, _] : Sync]: F[Nothing, String] = Sync[F].pure("hello")
+def hello2[F[_, _] : Sync]: F[Nothing, String] = Sync.pure("hello")
 
-def print1[F[+_, +_] : Sync](string: String): F[Nothing, Unit] = Sync[F].sync(println(string))
-def print2[F[+_, +_] : Sync](string: String): F[Nothing, Unit] = Sync.sync(println(string))
+def print1[F[_, _] : Sync](string: String): F[Nothing, Unit] = Sync[F].sync(println(string))
+def print2[F[_, _] : Sync](string: String): F[Nothing, Unit] = Sync.sync(println(string))
 
 // Sync.Ops provides instance methods. The following are equivalent:
 
-def printHello1[F[+_, +_] : Sync]: F[Nothing, Unit] = Sync[F].flatMap(hello1)(print1)
-def printHello2[F[+_, +_] : Sync]: F[Nothing, Unit] = hello1.flatMap(print1)
+def printHello1[F[_, _] : Sync]: F[Nothing, Unit] = Sync[F].flatMap(hello1)(print1)
+def printHello2[F[_, _] : Sync]: F[Nothing, Unit] = hello1.flatMap(print1)
 
 // Importing Sync.Ops enables for-yield syntax:
 
-def printHello3[F[+_, +_] : Sync]: F[Nothing, Unit] =
+def printHello3[F[_, _] : Sync]: F[Nothing, Unit] =
   for {
     hello <- hello1
     _     <- print1(hello)
   } yield ()
-
 ```

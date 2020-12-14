@@ -15,7 +15,19 @@
   */
 package au.id.tmm.bfect
 
-trait Bifunctor[F[_, _]] {
+import au.id.tmm.bfect.syntax.biFunctionK.≈>
+
+trait Bifunctor[F[_, _]] extends BiInvariant[F] {
+
+  override def biImap[L1, L2, R1, R2](
+    fl1r1: F[L1, R1],
+  )(
+    fl1l2: L1 => L2,
+    fr1r2: R1 => R2,
+  )(
+    fl2l1: L2 => L1,
+    fr2r1: R2 => R1,
+  ): F[L2, R2] = biMap(fl1r1)(fl1l2, fr1r2)
 
   def biMap[L1, R1, L2, R2](f: F[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): F[L2, R2]
 
@@ -44,7 +56,33 @@ trait Bifunctor[F[_, _]] {
 object Bifunctor {
   def apply[F[_, _] : Bifunctor]: Bifunctor[F] = implicitly[Bifunctor[F]]
 
-  implicit class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {
+  trait ToBifunctorOps {
+    implicit def toBiFunctorOps[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]): Ops[F, L, R] =
+      new Ops[F, L, R](flr)
+
+    implicit def toBiFunctorOpsLeftNothing[F[_, _], R](
+      flr: F[Nothing, R],
+    )(implicit
+      bifunctor: Bifunctor[F],
+    ): Ops[F, Nothing, R] =
+      new Ops[F, Nothing, R](flr)
+
+    implicit def toBiFunctorOpsRightNothing[F[_, _], L](
+      flr: F[L, Nothing],
+    )(implicit
+      bifunctor: Bifunctor[F],
+    ): Ops[F, L, Nothing] =
+      new Ops[F, L, Nothing](flr)
+
+    implicit def toBiFunctorOpsLeftNothingRightNothing[F[_, _]](
+      flr: F[Nothing, Nothing],
+    )(implicit
+      bifunctor: Bifunctor[F],
+    ): Ops[F, Nothing, Nothing] =
+      new Ops[F, Nothing, Nothing](flr)
+  }
+
+  final class Ops[F[_, _], L, R](flr: F[L, R])(implicit bifunctor: Bifunctor[F]) {
     def biMap[L2, R2](leftF: L => L2, rightF: R => R2): F[L2, R2] = bifunctor.biMap(flr)(leftF, rightF)
     def rightMap[R2](rightF: R => R2): F[L, R2]                   = bifunctor.rightMap(flr)(rightF)
     def map[R2](rightF: R => R2): F[L, R2]                        = bifunctor.map(flr)(rightF)
@@ -59,5 +97,12 @@ object Bifunctor {
       bifunctor.asExceptionFallible(flr.asInstanceOf[F[Nothing, R]])
     @inline def asThrowableFallible(implicit ev: L =:= Nothing): F[Throwable, R] =
       bifunctor.asThrowableFallible(flr.asInstanceOf[F[Nothing, R]])
+  }
+
+  implicit val bifunctorBiInvariantK: BiInvariantK[Bifunctor] = new BiInvariantK[Bifunctor] {
+    override def biImapK[F[_, _], G[_, _]](F: Bifunctor[F])(fFG: F ≈> G)(fGF: G ≈> F): Bifunctor[G] = new BFunctor[G] {
+      override def biMap[L1, R1, L2, R2](g: G[L1, R1])(leftF: L1 => L2, rightF: R1 => R2): G[L2, R2] =
+        fFG(F.biMap(fGF(g))(leftF, rightF))
+    }
   }
 }

@@ -35,7 +35,33 @@ object Async extends AsyncStaticOps {
 
   def apply[F[_, _] : Async]: Async[F] = implicitly[Async[F]]
 
-  implicit class Ops[F[_, _], E, A](fea: F[E, A])(implicit async: Async[F]) extends Sync.Ops[F, E, A](fea)
+  trait ToAsyncOps {
+    implicit def toAsyncOps[F[_, _], E, A](fea: F[E, A])(implicit timerInstance: Async[F]): Ops[F, E, A] =
+      new Ops[F, E, A](fea)
+
+    implicit def toAsyncOpsErrorNothing[F[_, _], A](
+      fea: F[Nothing, A],
+    )(implicit
+      timerInstance: Async[F],
+    ): Ops[F, Nothing, A] =
+      new Ops[F, Nothing, A](fea)
+
+    implicit def toAsyncOpsValueNothing[F[_, _], E](
+      fea: F[E, Nothing],
+    )(implicit
+      timerInstance: Async[F],
+    ): Ops[F, E, Nothing] =
+      new Ops[F, E, Nothing](fea)
+
+    implicit def toAsyncOpsErrorNothingValueNothing[F[_, _]](
+      fea: F[Nothing, Nothing],
+    )(implicit
+      timerInstance: Async[F],
+    ): Ops[F, Nothing, Nothing] =
+      new Ops[F, Nothing, Nothing](fea)
+  }
+
+  final class Ops[F[_, _], E, A](fea: F[E, A])(implicit async: Async[F])
 
 }
 
