@@ -63,6 +63,14 @@ class BifunctorMonadSpec extends AnyFlatSpec {
     assert(absolved === Right(()))
   }
 
+  "asThrowableFallible" should "compile when the error type is nothing" in {
+    import BifunctorMonad.Ops
+
+    val pure: Either[Nothing, Unit] = Right(())
+
+    assert(pure.asThrowableFallible === Right(()))
+  }
+
 }
 
 object BifunctorMonadSpec {

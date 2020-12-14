@@ -20,9 +20,9 @@ import au.id.tmm.bfect.BifunctorMonad
 
 class BifunctorMonadInstance private[instances] () extends BifunctorInstance with BifunctorMonad[IO] {
 
-  override def rightPure[A](a: A): IO[Nothing, A] = IO.pure(a)
+  override def rightPure[E, A](a: A): IO[E, A] = IO.pure(a)
 
-  override def leftPure[E](e: E): IO[E, Nothing] = IO.leftPure(e)
+  override def leftPure[E, A](e: E): IO[E, A] = IO.leftPure(e)
 
   override def flatMap[E1, E2 >: E1, A, B](fe1a: IO[E1, A])(fafe2b: A => IO[E2, B]): IO[E2, B] = fe1a.flatMap(fafe2b)
 

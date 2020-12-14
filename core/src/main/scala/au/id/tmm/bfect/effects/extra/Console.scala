@@ -17,7 +17,7 @@ package au.id.tmm.bfect.effects.extra
 
 import au.id.tmm.bfect.effects.Sync
 
-trait Console[F[+_, +_]] {
+trait Console[F[_, _]] {
 
   def lineSeparator: String
 
@@ -33,9 +33,9 @@ trait Console[F[+_, +_]] {
 }
 
 object Console {
-  def apply[F[+_, +_] : Console]: Console[F] = implicitly[Console[F]]
+  def apply[F[_, _] : Console]: Console[F] = implicitly[Console[F]]
 
-  trait Live[F[+_, +_]] extends Console[F] { self: Sync[F] =>
+  trait Live[F[_, _]] extends Console[F] { self: Sync[F] =>
     override val lineSeparator: String                           = System.lineSeparator()
     override def print(string: String): F[Nothing, Unit]         = sync(scala.Console.print(string))
     override def println(string: String): F[Nothing, Unit]       = sync(scala.Console.println(string))

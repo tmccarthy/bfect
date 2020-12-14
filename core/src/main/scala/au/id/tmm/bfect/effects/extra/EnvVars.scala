@@ -18,7 +18,7 @@ package au.id.tmm.bfect.effects.extra
 import au.id.tmm.bfect.BMonad
 import au.id.tmm.bfect.effects.Sync
 
-trait EnvVars[F[+_, +_]] {
+trait EnvVars[F[_, _]] {
   def envVars: F[Nothing, Map[String, String]]
 
   def envVar(key: String): F[Nothing, Option[String]]
@@ -28,17 +28,17 @@ trait EnvVars[F[+_, +_]] {
 
 object EnvVars {
 
-  def apply[F[+_, +_] : EnvVars]: EnvVars[F] = implicitly[EnvVars[F]]
+  def apply[F[_, _] : EnvVars]: EnvVars[F] = implicitly[EnvVars[F]]
 
-  trait WithBMonad[F[+_, +_]] extends EnvVars[F] { self: BMonad[F] =>
+  trait WithBMonad[F[_, _]] extends EnvVars[F] { self: BMonad[F] =>
     override def envVar(key: String): F[Nothing, Option[String]] =
-      map(envVars)(_.get(key))
+      map[Nothing, Map[String, String], Option[String]](envVars)(_.get(key))
 
     override def envVarOrError[E](key: String, onMissing: => E): F[E, String] =
       flatMap(envVars)(_.get(key).fold[F[E, String]](leftPure(onMissing))(rightPure))
   }
 
-  trait Live[F[+_, +_]] extends EnvVars.WithBMonad[F] { self: Sync[F] =>
+  trait Live[F[_, _]] extends EnvVars.WithBMonad[F] { self: Sync[F] =>
     override def envVars: F[Nothing, Map[String, String]] = sync(sys.env)
   }
 
