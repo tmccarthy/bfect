@@ -2,9 +2,11 @@ package au.id.tmm.bfect.catsinterop
 
 import au.id.tmm.bfect
 import au.id.tmm.bfect._
+import au.id.tmm.bfect.catsinterop.EitherTBfectConcurrent.CheckedException
 import au.id.tmm.bfect.effects.{Async, Concurrent, Die, Sync}
-import cats.{Functor, Monad, MonadError}
+import cats.{ApplicativeError, Functor, Monad, MonadError}
 import cats.data.EitherT
+import cats.effect.{CancelToken, Fiber}
 
 import scala.concurrent.CancellationException
 
@@ -102,7 +104,12 @@ class EitherTBfectAsync[F[_] : cats.effect.Async] extends EitherTBfectSync[F] wi
 class EitherTBfectConcurrent[F[_] : cats.effect.Concurrent]
     extends EitherTBfectAsync[F]
     with Concurrent.WithBMonad[EitherT[F, *, *]] {
-  private def asBfectFibre[E, A](catsFiber: cats.effect.Fiber[F, Either[E, A]]): Fibre[EitherT[F, *, *], E, A] = ???
+  private def asBfectFibre[E, A](catsFiber: cats.effect.Fiber[F, Either[E, A]]): Fibre[EitherT[F, *, *], E, A] =
+    new Fibre[EitherT[F, *, *], E, A] {
+      override def cancel: EitherT[F, Nothing, Unit] = EitherT.liftF(catsFiber.cancel)
+
+      override def join: EitherT[F, E, A] = EitherT(catsFiber.join)
+    }
 
   override def start[E, A](fea: EitherT[F, E, A]): EitherT[F, Nothing, Fibre[EitherT[F, *, *], E, A]] =
     EitherT.liftF {
@@ -112,12 +119,55 @@ class EitherTBfectConcurrent[F[_] : cats.effect.Concurrent]
   override def racePair[E, A, B](
     fea: EitherT[F, E, A],
     feb: EitherT[F, E, B],
-  ): EitherT[F, E, Either[(A, Fibre[EitherT[F, *, *], E, B]), (Fibre[EitherT[F, *, *], E, A], B)]] =
-    EitherT(cats.effect.Concurrent[F].racePair(fea.value, feb.value))
+  ): EitherT[F, E, Either[(A, Fibre[EitherT[F, *, *], E, B]), (Fibre[EitherT[F, *, *], E, A], B)]] = {
+      CheckedException.unsafeRescueCheckedExceptionsFor[F, E, Either[(A, Fiber[F, B]), (Fiber[F, A], B)]](
+        cats.effect.Concurrent[F].racePair(
+          CheckedException.raiseErrorsAsCheckedExceptionsFor(fea),
+          CheckedException.raiseErrorsAsCheckedExceptionsFor(feb),
+        )
+      ).map {
+        case Left((a, rightCatsFiberForB)) => Left((a, CheckedException.unsafeRescueCheckedExceptionsFor[F, E, B](rightCatsFiberForB)))
+        case Right((leftCatsFiberForA, b)) => Right((CheckedException.unsafeRescueCheckedExceptionsFor[F, E, A](leftCatsFiberForA), b))
+      }
+    }
 
-  override def race[E, A, B](fea: EitherT[F, E, A], feb: EitherT[F, E, B]): EitherT[F, E, Either[A, B]] =
-    EitherT(cats.effect.Concurrent[F].race(fea.value, feb.value))
+  override def cancelable[E, A](
+    registerForBfect: (Either[E, A] => Unit) => EitherT[F, Nothing, _],
+  ): EitherT[F, E, A] = {
+    val registerForCats: ((Either[Throwable, Either[E, A]] => Unit) => cats.effect.CancelToken[F]) = {
+      cbForCats: (Either[Throwable, Either[E, A]] => Unit) =>
+        val cbForBfect: (Either[E, A] => Unit) = either => cbForCats(Right(either))
 
-  override def cancelable[E, A](k: (Either[E, A] => Unit) => EitherT[F, Nothing, _]): EitherT[F, E, A] =
-    EitherT(cats.effect.Concurrent[F].cancelable(k))
+        cats.effect.Concurrent[F].as(registerForBfect(cbForBfect).value, ())
+    }
+
+    EitherT(cats.effect.Concurrent[F].cancelable(registerForCats))
+  }
+
+}
+
+object EitherTBfectConcurrent {
+  private final case class CheckedException[E](e: E) extends Exception
+
+  private object CheckedException {
+    def raiseErrorsAsCheckedExceptionsFor[F[_], E, A](fea: EitherT[F, E, A])(implicit monadError: MonadError[F, Throwable]): F[A] =
+      monadError.flatMap(fea.value) {
+        case Left(e) => monadError.raiseError(new CheckedException(e))
+        case Right(a) => monadError.pure(a)
+      }
+
+    def unsafeRescueCheckedExceptionsFor[F[_], E, A](fa: F[A])(implicit monadError: ApplicativeError[F, Throwable]): EitherT[F, E, A] =
+      EitherT {
+        monadError.recover(monadError.map[A, Either[E, A]](fa)(Right(_))) {
+          case CheckedException(e) => Left(e.asInstanceOf[E])
+        }
+      }
+
+    def unsafeRescueCheckedExceptionsFor[F[_], E, A](fiber: Fiber[F, A])(implicit monadError: ApplicativeError[F, Throwable]): Fiber[F, Either[E, A]] =
+      new Fiber[F, Either[E, A]] {
+        override def cancel: CancelToken[F] = fiber.cancel
+
+        override def join: F[Either[E, A]] = unsafeRescueCheckedExceptionsFor(fiber.join).value
+      }
+  }
 }
