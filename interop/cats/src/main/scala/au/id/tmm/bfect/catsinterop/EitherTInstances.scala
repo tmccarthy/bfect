@@ -2,82 +2,122 @@ package au.id.tmm.bfect.catsinterop
 
 import au.id.tmm.bfect
 import au.id.tmm.bfect._
-import au.id.tmm.bfect.effects.Die
+import au.id.tmm.bfect.effects.{Async, Concurrent, Die, Sync}
 import cats.{Functor, Monad, MonadError}
 import cats.data.EitherT
 
 import scala.concurrent.CancellationException
 
-trait EitherTInstances {
+class EitherTBifunctor[F[_] : Functor] extends Bifunctor[EitherT[F, *, *]] {
+  override def biMap[L1, R1, L2, R2](f: EitherT[F, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): EitherT[F, L2, R2] =
+    f.bimap(leftF, rightF)
+}
 
-  class EitherTBifunctor[F[_] : Functor] extends Bifunctor[EitherT[F, *, *]] {
-    override def biMap[L1, R1, L2, R2](f: EitherT[F, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): EitherT[F, L2, R2] =
-      f.bimap(leftF, rightF)
-  }
+class EitherTBifunctorMonadError[F[_] : Monad] extends EitherTBifunctor[F] with BifunctorMonadError[EitherT[F, *, *]] {
+  override def rightPure[E, A](a: A): EitherT[F, E, A] = EitherT.rightT(a)
 
-  class EitherTBifunctorMonadError[F[_] : Monad]
-      extends EitherTBifunctor[F]
-      with BifunctorMonadError[EitherT[F, *, *]] {
-    override def rightPure[E, A](a: A): EitherT[F, E, A] = EitherT.rightT(a)
+  override def leftPure[E, A](e: E): EitherT[F, E, A] = EitherT.leftT(e)
 
-    override def leftPure[E, A](e: E): EitherT[F, E, A] = EitherT.leftT(e)
+  override def flatMap[E1, E2 >: E1, A, B](
+    fe1a: EitherT[F, E1, A],
+  )(
+    fafe2b: A => EitherT[F, E2, B],
+  ): EitherT[F, E2, B] =
+    fe1a.flatMap[E2, B](fafe2b)
 
-    override def flatMap[E1, E2 >: E1, A, B](
-      fe1a: EitherT[F, E1, A],
-    )(
-      fafe2b: A => EitherT[F, E2, B],
-    ): EitherT[F, E2, B] =
-      fe1a.flatMap[E2, B](fafe2b)
+  override def tailRecM[E, A, A1](a: A)(f: A => EitherT[F, E, Either[A, A1]]): EitherT[F, E, A1] =
+    Monad[EitherT[F, E, *]].tailRecM(a)(f)
 
-    override def tailRecM[E, A, A1](a: A)(f: A => EitherT[F, E, Either[A, A1]]): EitherT[F, E, A1] =
-      Monad[EitherT[F, E, *]].tailRecM(a)(f)
-
-    override def handleErrorWith[E1, A, E2](fea: EitherT[F, E1, A])(f: E1 => EitherT[F, E2, A]): EitherT[F, E2, A] =
-      EitherT {
-        Monad[F].flatMap(fea.value) {
-          case Right(a) => Monad[F].pure(Right(a))
-          case Left(e)  => f(e).value
-        }
+  override def handleErrorWith[E1, A, E2](fea: EitherT[F, E1, A])(f: E1 => EitherT[F, E2, A]): EitherT[F, E2, A] =
+    EitherT {
+      Monad[F].flatMap(fea.value) {
+        case Right(a) => Monad[F].pure(Right(a))
+        case Left(e)  => f(e).value
       }
-  }
-
-  class EitherTBfectDie[F[_]](implicit F: MonadError[F, Throwable])
-      extends EitherTBifunctorMonadError[F]
-      with Die[EitherT[F, *, *]] {
-    override def failUnchecked(t: Throwable): EitherT[F, Nothing, Nothing] =
-      EitherT.liftF[F, Nothing, Nothing](F.raiseError[Nothing](t))
-  }
-
-  class EitherTBfectBracket[F[_]](implicit F: cats.effect.Bracket[F, Throwable])
-      extends EitherTBfectDie[F]
-      with bfect.effects.Bracket.WithBMonad[EitherT[F, *, *]] {
-    override def bracketCase[R, E, A](
-      acquire: EitherT[F, E, R],
-      release: (R, ExitCase[E, Unit]) => EitherT[F, Nothing, _],
-      use: R => EitherT[F, E, A],
-    ): EitherT[F, E, A] = EitherT {
-      F.bracketCase[Either[E, R], Either[E, A]](
-        acquire.value,
-      )(
-        use = {
-          case Left(e)  => F.pure(Left(e))
-          case Right(r) => use(r).value
-        },
-      )(
-        release = {
-          case (Left(e), _) => F.pure(Left(e))
-          case (Right(r), catsExitCase) => {
-            val bfectExitCase: ExitCase[E, Unit] = catsExitCase match {
-              case cats.effect.ExitCase.Completed => ExitCase.Succeeded(())
-              case cats.effect.ExitCase.Error(e)  => ExitCase.Failed(Failure.Unchecked(e))
-              case cats.effect.ExitCase.Canceled  => ExitCase.Failed(Failure.Unchecked(new CancellationException))
-            }
-
-            F.as(release(r, bfectExitCase).value, ())
-          }
-        },
-      )
     }
-  }
+}
 
+class EitherTBfectDie[F[_]](implicit F: MonadError[F, Throwable])
+    extends EitherTBifunctorMonadError[F]
+    with Die[EitherT[F, *, *]] {
+  override def failUnchecked(t: Throwable): EitherT[F, Nothing, Nothing] =
+    EitherT.liftF[F, Nothing, Nothing](F.raiseError[Nothing](t))
+}
+
+class EitherTBfectBracket[F[_]](implicit F: cats.effect.Bracket[F, Throwable])
+    extends EitherTBfectDie[F]
+    with bfect.effects.Bracket.WithBMonad[EitherT[F, *, *]] {
+  override def bracketCase[R, E, A](
+    acquire: EitherT[F, E, R],
+    release: (R, ExitCase[E, Unit]) => EitherT[F, Nothing, _],
+    use: R => EitherT[F, E, A],
+  ): EitherT[F, E, A] = EitherT {
+    F.bracketCase[Either[E, R], Either[E, A]](
+      acquire.value,
+    )(
+      use = {
+        case Left(e)  => F.pure(Left(e))
+        case Right(r) => use(r).value
+      },
+    )(
+      release = {
+        case (Left(e), _) => F.pure(Left(e))
+        case (Right(r), catsExitCase) => {
+          val bfectExitCase: ExitCase[E, Unit] = catsExitCase match {
+            case cats.effect.ExitCase.Completed => ExitCase.Succeeded(())
+            case cats.effect.ExitCase.Error(e)  => ExitCase.Failed(Failure.Unchecked(e))
+            case cats.effect.ExitCase.Canceled  => ExitCase.Failed(Failure.Unchecked(new CancellationException))
+          }
+
+          F.as(release(r, bfectExitCase).value, ())
+        }
+      },
+    )
+  }
+}
+
+class EitherTBfectSync[F[_] : cats.effect.Sync] extends EitherTBfectBracket[F] with Sync[EitherT[F, *, *]] {
+  override def failUnchecked(t: Throwable): EitherT[F, Nothing, Nothing] =
+    EitherT.liftF[F, Nothing, Nothing](cats.effect.Sync[F].raiseError[Nothing](t))
+
+  override def suspend[E, A](effect: => EitherT[F, E, A]): EitherT[F, E, A] =
+    EitherT {
+      cats.effect.Sync[F].defer(effect.value)
+    }
+}
+
+class EitherTBfectAsync[F[_] : cats.effect.Async] extends EitherTBfectSync[F] with Async[EitherT[F, *, *]] {
+  override def asyncF[E, A](registerForBfect: (Either[E, A] => Unit) => EitherT[F, Nothing, _]): EitherT[F, E, A] = {
+    val registerForCats: (Either[Throwable, Either[E, A]] => Unit) => F[Unit] = {
+      cbForCats: (Either[Throwable, Either[E, A]] => Unit) =>
+        val cbForBfect: Either[E, A] => Unit = either => cbForCats(Right(either))
+
+        cats.effect.Async[F].as(registerForBfect(cbForBfect).value, ())
+    }
+
+    EitherT(cats.effect.Async[F].asyncF[Either[E, A]](registerForCats))
+  }
+}
+
+class EitherTBfectConcurrent[F[_] : cats.effect.Concurrent]
+    extends EitherTBfectAsync[F]
+    with Concurrent.WithBMonad[EitherT[F, *, *]] {
+  private def asBfectFibre[E, A](catsFiber: cats.effect.Fiber[F, Either[E, A]]): Fibre[EitherT[F, *, *], E, A] = ???
+
+  override def start[E, A](fea: EitherT[F, E, A]): EitherT[F, Nothing, Fibre[EitherT[F, *, *], E, A]] =
+    EitherT.liftF {
+      cats.effect.Concurrent[F].map(cats.effect.Concurrent[F].start[Either[E, A]](fea.value))(asBfectFibre[E, A])
+    }
+
+  override def racePair[E, A, B](
+    fea: EitherT[F, E, A],
+    feb: EitherT[F, E, B],
+  ): EitherT[F, E, Either[(A, Fibre[EitherT[F, *, *], E, B]), (Fibre[EitherT[F, *, *], E, A], B)]] =
+    EitherT(cats.effect.Concurrent[F].racePair(fea.value, feb.value))
+
+  override def race[E, A, B](fea: EitherT[F, E, A], feb: EitherT[F, E, B]): EitherT[F, E, Either[A, B]] =
+    EitherT(cats.effect.Concurrent[F].race(fea.value, feb.value))
+
+  override def cancelable[E, A](k: (Either[E, A] => Unit) => EitherT[F, Nothing, _]): EitherT[F, E, A] =
+    EitherT(cats.effect.Concurrent[F].cancelable(k))
 }
