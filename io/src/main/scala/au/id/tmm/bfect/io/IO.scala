@@ -58,10 +58,10 @@ sealed trait IO[+E, +A] {
   def ensure(finalizer: IO[Nothing, _]): IO[E, A] =
     ensureCase(_ => finalizer)
 
-  def ensureCase(finalizer: ExitCase[E, A] => IO[Nothing, _]): IO[E, A] =
+  def ensureCase(finalizer: ExitCase[E, Unit] => IO[Nothing, _]): IO[E, A] =
     this match {
       case IO.Ensure(io, finalizer1) =>
-        IO.Ensure(io, (exit: ExitCase[E, A]) => finalizer1(exit).flatMap(_ => finalizer(exit)))
+        IO.Ensure(io, (exit: ExitCase[E, Unit]) => finalizer1(exit).flatMap(_ => finalizer(exit)))
       case self => IO.Ensure(self, finalizer)
     }
 
@@ -86,7 +86,7 @@ object IO {
   def bracketCase[R, E, A](
     acquire: IO[E, R],
   )(
-    release: (R, ExitCase[E, A]) => IO[Nothing, _],
+    release: (R, ExitCase[E, Unit]) => IO[Nothing, _],
   )(
     use: R => IO[E, A],
   ): IO[E, A] =
@@ -105,7 +105,7 @@ object IO {
     leftF: Failure[E] => IO[E2, A2],
     rightF: A => IO[E2, A2],
   ) extends IO[E2, A2]
-  final case class Effect[A](block: () => A)                                               extends IO[Nothing, A]
-  final case class Ensure[E, A](io: IO[E, A], finalizer: ExitCase[E, A] => IO[Nothing, _]) extends IO[E, A]
+  final case class Effect[A](block: () => A)                                                  extends IO[Nothing, A]
+  final case class Ensure[E, A](io: IO[E, A], finalizer: ExitCase[E, Unit] => IO[Nothing, _]) extends IO[E, A]
 
 }

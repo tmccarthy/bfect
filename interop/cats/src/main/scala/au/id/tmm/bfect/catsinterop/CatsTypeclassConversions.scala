@@ -65,7 +65,7 @@ private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
       release: (A, cats.effect.ExitCase[Throwable]) => F[Throwable, Unit],
     ): F[Throwable, B] = {
 
-      val releaseForBfectBracket: (A, ExitCase[Throwable, B]) => F[Nothing, _] = {
+      val releaseForBfectBracket: (A, ExitCase[Throwable, Unit]) => F[Nothing, _] = {
         case (resource, exitCase) =>
           val catsExitCase: cats.effect.ExitCase[Throwable] = exitCase match {
             case ExitCase.Succeeded(a)                 => cats.effect.ExitCase.Completed

@@ -15,7 +15,12 @@
   */
 package au.id.tmm.bfect
 
-sealed trait ExitCase[+E, +A]
+sealed trait ExitCase[+E, +A] {
+  def as[A2](a2: A2): ExitCase[E, A2] = this match {
+    case ExitCase.Succeeded(a)  => ExitCase.Succeeded(a2)
+    case f @ ExitCase.Failed(_) => f
+  }
+}
 
 object ExitCase {
 

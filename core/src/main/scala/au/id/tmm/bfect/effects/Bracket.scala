@@ -22,7 +22,7 @@ trait Bracket[F[_, _]] {
 
   def bracketCase[R, E, A](
     acquire: F[E, R],
-    release: (R, ExitCase[E, A]) => F[Nothing, _],
+    release: (R, ExitCase[E, Unit]) => F[Nothing, _],
     use: R => F[E, A],
   ): F[E, A]
 
@@ -43,9 +43,10 @@ trait Bracket[F[_, _]] {
     */
   def bracket[R, E](acquire: F[E, R]): PartialAcquire[F, R, E] = Bracket.bracket(acquire)
 
-  def ensure[E, A](fea: F[E, A])(finalizer: F[Nothing, _]): F[E, A]
+  def ensure[E, A](fea: F[E, A])(finalizer: F[Nothing, _]): F[E, A] =
+    ensureCase[E, A](fea)(_ => finalizer)
 
-  def ensureCase[E, A](fea: F[E, A])(finalizer: ExitCase[E, A] => F[Nothing, _]): F[E, A]
+  def ensureCase[E, A](fea: F[E, A])(finalizer: ExitCase[E, Unit] => F[Nothing, _]): F[E, A]
 
 }
 
@@ -56,7 +57,7 @@ object Bracket extends BracketStaticOps {
     override def ensure[E, A](fea: F[E, A])(finalizer: F[Nothing, _]): F[E, A] =
       bracket[Unit, E, A](rightPure(()), _ => finalizer, _ => fea)
 
-    override def ensureCase[E, A](fea: F[E, A])(finalizer: ExitCase[E, A] => F[Nothing, _]): F[E, A] =
+    override def ensureCase[E, A](fea: F[E, A])(finalizer: ExitCase[E, Unit] => F[Nothing, _]): F[E, A] =
       bracketCase[Unit, E, A](rightPure(()), { case (resource, exitCase) => finalizer(exitCase) }, _ => fea)
   }
 
@@ -87,18 +88,18 @@ object Bracket extends BracketStaticOps {
   }
 
   final class Ops[F[_, _], E, A](fea: F[E, A])(implicit bracket: Bracket[F]) {
-    def ensure(finalizer: F[Nothing, _]): F[E, A]                       = bracket.ensure(fea)(finalizer)
-    def ensureCase(finalizer: ExitCase[E, A] => F[Nothing, _]): F[E, A] = bracket.ensureCase(fea)(finalizer)
+    def ensure(finalizer: F[Nothing, _]): F[E, A]                          = bracket.ensure(fea)(finalizer)
+    def ensureCase(finalizer: ExitCase[E, Unit] => F[Nothing, _]): F[E, A] = bracket.ensureCase(fea)(finalizer)
   }
 
   final class PartialCaseAcquire[F[_, _], R, E] private[effects] (acquire: F[E, R]) {
-    def apply[A](release: (R, ExitCase[E, A]) => F[Nothing, _]): PartialCaseAcquireRelease[F, R, E, A] =
+    def apply[A](release: (R, ExitCase[E, Unit]) => F[Nothing, _]): PartialCaseAcquireRelease[F, R, E, A] =
       new PartialCaseAcquireRelease[F, R, E, A](acquire, release)
   }
 
   final class PartialCaseAcquireRelease[F[_, _], R, E, A] private[effects] (
     acquire: F[E, R],
-    release: (R, ExitCase[E, A]) => F[Nothing, _],
+    release: (R, ExitCase[E, Unit]) => F[Nothing, _],
   ) {
     def apply(use: R => F[E, A])(bracket: Bracket[F]): F[E, A] = bracket.bracketCase(acquire, release, use)
   }
@@ -119,7 +120,7 @@ trait BracketStaticOps {
 
   def bracketCase[F[_, _] : Bracket, R, E, A](
     acquire: F[E, R],
-    release: (R, ExitCase[E, A]) => F[Nothing, _],
+    release: (R, ExitCase[E, Unit]) => F[Nothing, _],
     use: R => F[E, A],
   ): F[E, A] = Bracket[F].bracketCase[R, E, A](acquire, release, use)
 

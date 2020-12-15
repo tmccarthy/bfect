@@ -149,7 +149,7 @@ object BState {
 
     override def bracketCase[R, E, A](
       acquire: BState[S, E, R],
-      release: (R, ExitCase[E, A]) => BState[S, Nothing, _],
+      release: (R, ExitCase[E, Unit]) => BState[S, Nothing, _],
       use: R => BState[S, E, A],
     ): BState[S, E, A] =
       BState { state =>
@@ -159,7 +159,7 @@ object BState {
           case Right(acquired) =>
             use(acquired).run(stateAfterAcquisition) match {
               case (stateAfterUse, Right(resultAfterUse)) =>
-                release(acquired, ExitCase.Succeeded(resultAfterUse)).map(_ => resultAfterUse).run(stateAfterUse)
+                release(acquired, ExitCase.Succeeded(())).map(_ => resultAfterUse).run(stateAfterUse)
 
               case (stateAfterUse, Left(error)) =>
                 release(acquired, ExitCase.Failed(Failure.Checked(error)))

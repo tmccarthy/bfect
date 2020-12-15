@@ -63,12 +63,12 @@ object ZioInstanceMixins {
 
     override def bracketCase[R, E, A](
       acquire: IO[E, R],
-      release: (R, ExitCase[E, A]) => IO[Nothing, _],
+      release: (R, ExitCase[E, Unit]) => IO[Nothing, _],
       use: R => IO[E, A],
     ): IO[E, A] = {
       val releaseForZioBracket: (R, zio.Exit[E, A]) => IO[Nothing, _] = {
         case (resource, zioExit) =>
-          release(resource, bfectExitCaseFrom(zioExit))
+          release(resource, bfectExitCaseFrom(zioExit).as(()))
       }
 
       IO.bracketExit[E, R, A](acquire, releaseForZioBracket, use)
