@@ -9,8 +9,7 @@ trait FirstPriorityEitherTInstances extends SecondPriorityEitherTInstances {
     new BMEInstance()
 }
 
-trait SecondPriorityEitherTInstances extends ThirdPriorityEitherTInstances {
-}
+trait SecondPriorityEitherTInstances extends ThirdPriorityEitherTInstances {}
 
 trait ThirdPriorityEitherTInstances {
   implicit def biFunctorInstance[F[_]](implicit functor: Functor[F]): Bifunctor[EitherT[F, *, *]] =
