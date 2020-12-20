@@ -11,35 +11,6 @@ import cats.effect.{CancelToken, Fiber}
 import java.time.{Duration, Instant}
 import scala.concurrent.CancellationException
 
-class BifunctorInstance[F[_] : Functor] extends Bifunctor[EitherT[F, *, *]] {
-  override def biMap[L1, R1, L2, R2](f: EitherT[F, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): EitherT[F, L2, R2] =
-    f.bimap(leftF, rightF)
-}
-
-class BMEInstance[F[_] : Monad] extends BifunctorInstance[F] with BifunctorMonadError[EitherT[F, *, *]] {
-  override def rightPure[E, A](a: A): EitherT[F, E, A] = EitherT.rightT(a)
-
-  override def leftPure[E, A](e: E): EitherT[F, E, A] = EitherT.leftT(e)
-
-  override def flatMap[E1, E2 >: E1, A, B](
-    fe1a: EitherT[F, E1, A],
-  )(
-    fafe2b: A => EitherT[F, E2, B],
-  ): EitherT[F, E2, B] =
-    fe1a.flatMap[E2, B](fafe2b)
-
-  override def tailRecM[E, A, A1](a: A)(f: A => EitherT[F, E, Either[A, A1]]): EitherT[F, E, A1] =
-    Monad[EitherT[F, E, *]].tailRecM(a)(f)
-
-  override def handleErrorWith[E1, A, E2](fea: EitherT[F, E1, A])(f: E1 => EitherT[F, E2, A]): EitherT[F, E2, A] =
-    EitherT {
-      Monad[F].flatMap(fea.value) {
-        case Right(a) => Monad[F].pure(Right(a))
-        case Left(e)  => f(e).value
-      }
-    }
-}
-
 class EitherTBfectDie[F[_]](implicit F: MonadError[F, Throwable])
     extends BMEInstance[F]
     with Die[EitherT[F, *, *]] {
