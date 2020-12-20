@@ -1,6 +1,6 @@
 package au.id.tmm.bfect.catsinterop.instances
 
-import au.id.tmm.bfect.{Bifunctor, BifunctorMonad, BifunctorMonadError}
+import au.id.tmm.bfect.{Bifunctor, BifunctorMonadError}
 import cats.data.EitherT
 import cats.{Functor, Monad}
 
@@ -10,8 +10,6 @@ trait FirstPriorityEitherTInstances extends SecondPriorityEitherTInstances {
 }
 
 trait SecondPriorityEitherTInstances extends ThirdPriorityEitherTInstances {
-  implicit def biFunctorMonadInstance[F[_]](implicit monad: Monad[F]): BifunctorMonad[EitherT[F, *, *]] =
-    new BifunctorMonadInstance[F]()
 }
 
 trait ThirdPriorityEitherTInstances {
