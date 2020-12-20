@@ -1,8 +1,8 @@
-package au.id.tmm.bfect.catsinterop
+package au.id.tmm.bfect.catsinterop.instances
 
 import au.id.tmm.bfect
 import au.id.tmm.bfect._
-import au.id.tmm.bfect.catsinterop.EitherTBfectConcurrent.CheckedException
+import au.id.tmm.bfect.catsinterop.instances.EitherTBfectConcurrent.CheckedException
 import au.id.tmm.bfect.effects.{Async, Concurrent, Die, Now, Sync, Timer}
 import cats.{ApplicativeError, Functor, Monad, MonadError}
 import cats.data.EitherT
