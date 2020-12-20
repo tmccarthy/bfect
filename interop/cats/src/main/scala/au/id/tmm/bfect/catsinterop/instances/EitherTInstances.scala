@@ -11,12 +11,12 @@ import cats.effect.{CancelToken, Fiber}
 import java.time.{Duration, Instant}
 import scala.concurrent.CancellationException
 
-class EitherTBifunctor[F[_] : Functor] extends Bifunctor[EitherT[F, *, *]] {
+class BifunctorInstance[F[_] : Functor] extends Bifunctor[EitherT[F, *, *]] {
   override def biMap[L1, R1, L2, R2](f: EitherT[F, L1, R1])(leftF: L1 => L2, rightF: R1 => R2): EitherT[F, L2, R2] =
     f.bimap(leftF, rightF)
 }
 
-class EitherTBifunctorMonadError[F[_] : Monad] extends EitherTBifunctor[F] with BifunctorMonadError[EitherT[F, *, *]] {
+class BMEInstance[F[_] : Monad] extends BifunctorInstance[F] with BifunctorMonadError[EitherT[F, *, *]] {
   override def rightPure[E, A](a: A): EitherT[F, E, A] = EitherT.rightT(a)
 
   override def leftPure[E, A](e: E): EitherT[F, E, A] = EitherT.leftT(e)
@@ -41,7 +41,7 @@ class EitherTBifunctorMonadError[F[_] : Monad] extends EitherTBifunctor[F] with 
 }
 
 class EitherTBfectDie[F[_]](implicit F: MonadError[F, Throwable])
-    extends EitherTBifunctorMonadError[F]
+    extends BMEInstance[F]
     with Die[EitherT[F, *, *]] {
   override def failUnchecked(t: Throwable): EitherT[F, Nothing, Nothing] =
     EitherT.liftF[F, Nothing, Nothing](F.raiseError[Nothing](t))
@@ -197,7 +197,7 @@ class EitherTBfectNow[F[_]](implicit clockF: cats.effect.Clock[F], F: Functor[F]
 }
 
 class EitherTBfectTimer[F[_] : cats.effect.Timer : Monad]
-    extends EitherTBifunctorMonadError[F]
+    extends BMEInstance[F]
     with Timer.WithBMonad[EitherT[F, *, *]] {
   private val bfectNowInstance: Now[EitherT[F, *, *]] = new EitherTBfectNow[F]
 
