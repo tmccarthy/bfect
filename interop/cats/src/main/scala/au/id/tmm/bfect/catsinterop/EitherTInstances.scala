@@ -3,11 +3,12 @@ package au.id.tmm.bfect.catsinterop
 import au.id.tmm.bfect
 import au.id.tmm.bfect._
 import au.id.tmm.bfect.catsinterop.EitherTBfectConcurrent.CheckedException
-import au.id.tmm.bfect.effects.{Async, Concurrent, Die, Sync}
+import au.id.tmm.bfect.effects.{Async, Concurrent, Die, Now, Sync, Timer}
 import cats.{ApplicativeError, Functor, Monad, MonadError}
 import cats.data.EitherT
 import cats.effect.{CancelToken, Fiber}
 
+import java.time.{Duration, Instant}
 import scala.concurrent.CancellationException
 
 class EitherTBifunctor[F[_] : Functor] extends Bifunctor[EitherT[F, *, *]] {
@@ -187,4 +188,21 @@ object EitherTBfectConcurrent {
         override def join: F[Either[E, A]] = unsafeRescueCheckedExceptionsFor(fiber.join).value
       }
   }
+}
+
+class EitherTBfectNow[F[_]](implicit clockF: cats.effect.Clock[F], F: Functor[F]) extends Now[EitherT[F, *, *]] {
+  override def now: EitherT[F, Nothing, Instant] = EitherT.liftF[F, Nothing, Instant] {
+    F.map(clockF.realTime(scala.concurrent.duration.MILLISECONDS))(Instant.ofEpochMilli)
+  }
+}
+
+class EitherTBfectTimer[F[_] : cats.effect.Timer : Monad]
+    extends EitherTBifunctorMonadError[F]
+    with Timer.WithBMonad[EitherT[F, *, *]] {
+  private val bfectNowInstance: Now[EitherT[F, *, *]] = new EitherTBfectNow[F]
+
+  override def now: EitherT[F, Nothing, Instant] = bfectNowInstance.now
+
+  override def sleep(duration: Duration): EitherT[F, Nothing, Unit] =
+    EitherT.liftF[F, Nothing, Unit](cats.effect.Timer[F].sleep(Timer.convertJavaDurationToScalaDuration(duration)))
 }

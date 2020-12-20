@@ -104,12 +104,15 @@ object Timer extends TimerStaticOps {
       timerInstance.repeatFixedRate(fea, periodAsScalaDuration)
   }
 
-  private[effects] def convertScalaDurationToJavaDuration(scalaDuration: ScalaDuration): Duration =
+  private[bfect] def convertScalaDurationToJavaDuration(scalaDuration: ScalaDuration): Duration =
     scalaDuration match {
       case ScalaDuration.MinusInf              => Duration.ofSeconds(Long.MinValue, 0)
       case _: ScalaDuration.Infinite           => Duration.ofSeconds(Long.MaxValue, 999999999)
       case finiteDuration: FiniteScalaDuration => Duration.ofNanos(finiteDuration.toNanos)
     }
+
+  private[bfect] def convertJavaDurationToScalaDuration(javaDuration: Duration): FiniteScalaDuration =
+    FiniteScalaDuration(javaDuration.toNanos, scala.concurrent.duration.NANOSECONDS)
 
 }
 
