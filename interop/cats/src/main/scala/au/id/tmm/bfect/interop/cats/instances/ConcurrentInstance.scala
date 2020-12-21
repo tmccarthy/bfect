@@ -1,7 +1,7 @@
-package au.id.tmm.bfect.catsinterop.instances
+package au.id.tmm.bfect.interop.cats.instances
 
 import au.id.tmm.bfect._
-import au.id.tmm.bfect.catsinterop.instances.ConcurrentInstance.CheckedException
+import ConcurrentInstance.CheckedException
 import au.id.tmm.bfect.effects.Concurrent
 import cats.data.EitherT
 import cats.effect.{CancelToken, Fiber}

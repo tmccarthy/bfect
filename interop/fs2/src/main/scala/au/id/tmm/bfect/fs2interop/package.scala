@@ -22,6 +22,6 @@ package object fs2interop {
   type Fs2Compiler[F[+_, +_]] = fs2.Stream.Compiler[F[Throwable, +?], F[Throwable, +?]]
 
   implicit def fs2CompilerForBfect[F[+_, +_] : Sync : Bracket]: Fs2Compiler[F] =
-    fs2.Stream.Compiler.syncInstance[F[Throwable, +?]](catsinterop.bfectSyncIsCatsSync)
+    fs2.Stream.Compiler.syncInstance[F[Throwable, +?]](interop.cats.bfectSyncIsCatsSync)
 
 }

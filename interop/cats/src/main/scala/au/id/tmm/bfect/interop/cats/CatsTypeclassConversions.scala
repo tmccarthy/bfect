@@ -13,7 +13,7 @@
   *    See the License for the specific language governing permissions and
   *    limitations under the License.
   */
-package au.id.tmm.bfect.catsinterop
+package au.id.tmm.bfect.interop.cats
 
 import au.id.tmm.bfect._
 import au.id.tmm.bfect.effects._
@@ -21,7 +21,7 @@ import cats.effect.Clock
 
 import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 
-private[catsinterop] object BfectToCatsTypeclassConversionsImpls {
+private[cats] object BfectToCatsTypeclassConversionsImpls {
 
   class CatsBifunctorForBfectBifunctor[F[_, _]](implicit bfectBifunctor: Bifunctor[F]) extends cats.Bifunctor[F] {
     override def bimap[A, B, C, D](fab: F[A, B])(f: A => C, g: B => D): F[C, D] = bfectBifunctor.biMap(fab)(f, g)

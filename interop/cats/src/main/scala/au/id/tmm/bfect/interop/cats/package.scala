@@ -13,6 +13,6 @@
   *    See the License for the specific language governing permissions and
   *    limitations under the License.
   */
-package au.id.tmm.bfect
+package au.id.tmm.bfect.interop
 
-package object catsinterop extends CatsTypeclassConversions
+package object cats extends CatsTypeclassConversions

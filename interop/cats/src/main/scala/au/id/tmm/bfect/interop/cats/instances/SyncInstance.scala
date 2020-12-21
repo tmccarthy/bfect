@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.catsinterop.instances
+package au.id.tmm.bfect.interop.cats.instances
 
 import au.id.tmm.bfect.effects.Sync
 import cats.data.EitherT
