@@ -13,15 +13,16 @@
   *    See the License for the specific language governing permissions and
   *    limitations under the License.
   */
-package au.id.tmm.bfect
+package au.id.tmm.bfect.interop
 
+import _root_.fs2.Stream
 import au.id.tmm.bfect.effects.{Bracket, Sync}
 
-package object fs2interop {
+package object fs2 {
 
-  type Fs2Compiler[F[+_, +_]] = fs2.Stream.Compiler[F[Throwable, +?], F[Throwable, +?]]
+  type Fs2Compiler[F[+_, +_]] = Stream.Compiler[F[Throwable, +?], F[Throwable, +?]]
 
   implicit def fs2CompilerForBfect[F[+_, +_] : Sync : Bracket]: Fs2Compiler[F] =
-    fs2.Stream.Compiler.syncInstance[F[Throwable, +?]](interop.cats.bfectSyncIsCatsSync)
+    Stream.Compiler.syncInstance[F[Throwable, +?]](cats.bfectSyncIsCatsSync)
 
 }
