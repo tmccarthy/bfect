@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.interop.cats.instances
+package au.id.tmm.bfect.interop.cats.instanceimpls.eitherT
 
 import au.id.tmm.bfect
 import au.id.tmm.bfect._
@@ -6,7 +6,7 @@ import cats.data.EitherT
 
 import scala.concurrent.CancellationException
 
-class BracketInstance[F[_]] private[instances] (implicit F: cats.effect.Bracket[F, Throwable])
+class BracketInstance[F[_]] private[instanceimpls] (implicit F: cats.effect.Bracket[F, Throwable])
     extends DieInstance[F]
     with bfect.effects.Bracket.WithBMonad[EitherT[F, *, *]] {
   override def bracketCase[R, E, A](

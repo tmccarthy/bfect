@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.interop.cats.instances
+package au.id.tmm.bfect.interop.cats.instanceimpls.eitherT
 
 import au.id.tmm.bfect.effects.{Now, Timer}
 import cats.Monad
@@ -6,7 +6,7 @@ import cats.data.EitherT
 
 import java.time.{Duration, Instant}
 
-class TimerInstance[F[_] : cats.effect.Timer : Monad] private[instances]
+class TimerInstance[F[_] : cats.effect.Timer : Monad] private[instanceimpls]
     extends BMEInstance[F]
     with Timer.WithBMonad[EitherT[F, *, *]] {
   private val bfectNowInstance: Now[EitherT[F, *, *]] = new NowInstance[F]

@@ -1,10 +1,10 @@
-package au.id.tmm.bfect.interop.cats.instances
+package au.id.tmm.bfect.interop.cats.instanceimpls.eitherT
 
 import au.id.tmm.bfect.BifunctorMonadError
 import cats.Monad
 import cats.data.EitherT
 
-class BMEInstance[F[_]] private[instances] (implicit monad: Monad[F])
+class BMEInstance[F[_]] private[instanceimpls] (implicit monad: Monad[F])
     extends BifunctorInstance[F]
     with BifunctorMonadError[EitherT[F, *, *]] {
   override def flatMap[E1, E2 >: E1, A, B](

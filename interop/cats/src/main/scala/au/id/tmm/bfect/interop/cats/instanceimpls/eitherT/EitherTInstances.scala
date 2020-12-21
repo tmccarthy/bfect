@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.interop.cats.instances
+package au.id.tmm.bfect.interop.cats.instanceimpls.eitherT
 
 import au.id.tmm.bfect
 import cats.data.EitherT
@@ -31,7 +31,7 @@ trait EitherTInstanceTraits0 extends EitherTInstanceTraits1 {
 
 }
 
-private[instances] trait EitherTInstanceTraits1 extends EitherTInstanceTraits2 {
+private[instanceimpls] trait EitherTInstanceTraits1 extends EitherTInstanceTraits2 {
 
   implicit def bfectNowInstanceForCatsEitherT[F[_] : cats.effect.Clock : Functor]: bfect.effects.Now[EitherT[F, *, *]] =
     new NowInstance[F]
@@ -41,7 +41,7 @@ private[instances] trait EitherTInstanceTraits1 extends EitherTInstanceTraits2 {
 
 }
 
-private[instances] trait EitherTInstanceTraits2 extends EitherTInstanceTraits3 {
+private[instanceimpls] trait EitherTInstanceTraits2 extends EitherTInstanceTraits3 {
 
   implicit def bfectDieInstanceForCatsEitherT[F[_]](
     implicit
@@ -50,14 +50,14 @@ private[instances] trait EitherTInstanceTraits2 extends EitherTInstanceTraits3 {
 
 }
 
-private[instances] trait EitherTInstanceTraits3 extends EitherTInstanceTraits4 {
+private[instanceimpls] trait EitherTInstanceTraits3 extends EitherTInstanceTraits4 {
 
   implicit def bfectBmeInstanceForCatsEitherT[F[_] : Monad]: bfect.BifunctorMonadError[EitherT[F, *, *]] =
     new BMEInstance[F]
 
 }
 
-private[instances] trait EitherTInstanceTraits4 {
+private[instanceimpls] trait EitherTInstanceTraits4 {
 
   implicit def bfectBifunctorInstanceForCatsEitherT[F[_] : Functor]: bfect.Bifunctor[EitherT[F, *, *]] =
     new BifunctorInstance[F]

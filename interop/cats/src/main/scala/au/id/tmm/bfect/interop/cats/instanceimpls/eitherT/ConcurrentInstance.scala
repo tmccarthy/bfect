@@ -1,4 +1,4 @@
-package au.id.tmm.bfect.interop.cats.instances
+package au.id.tmm.bfect.interop.cats.instanceimpls.eitherT
 
 import au.id.tmm.bfect._
 import ConcurrentInstance.CheckedException
@@ -7,7 +7,7 @@ import cats.data.EitherT
 import cats.effect.{CancelToken, Fiber}
 import cats.{ApplicativeError, MonadError}
 
-class ConcurrentInstance[F[_] : cats.effect.Concurrent] private[instances]
+class ConcurrentInstance[F[_] : cats.effect.Concurrent] private[instanceimpls]
     extends AsyncInstance[F]
     with Concurrent.WithBMonad[EitherT[F, *, *]] {
   private def asBfectFibre[E, A](catsFiber: cats.effect.Fiber[F, Either[E, A]]): Fibre[EitherT[F, *, *], E, A] =

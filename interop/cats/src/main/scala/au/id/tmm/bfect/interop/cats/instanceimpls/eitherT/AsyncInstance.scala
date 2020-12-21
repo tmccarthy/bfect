@@ -1,9 +1,11 @@
-package au.id.tmm.bfect.interop.cats.instances
+package au.id.tmm.bfect.interop.cats.instanceimpls.eitherT
 
 import au.id.tmm.bfect.effects.Async
 import cats.data.EitherT
 
-class AsyncInstance[F[_] : cats.effect.Async] private[instances] extends SyncInstance[F] with Async[EitherT[F, *, *]] {
+class AsyncInstance[F[_] : cats.effect.Async] private[instanceimpls]
+    extends SyncInstance[F]
+    with Async[EitherT[F, *, *]] {
   override def asyncF[E, A](registerForBfect: (Either[E, A] => Unit) => EitherT[F, Nothing, _]): EitherT[F, E, A] = {
     val registerForCats: (Either[Throwable, Either[E, A]] => Unit) => F[Unit] = {
       cbForCats: (Either[Throwable, Either[E, A]] => Unit) =>
