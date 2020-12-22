@@ -22,6 +22,9 @@ val fs2Version  = "2.4.5"
 lazy val core = project
   .in(file("core"))
   .settings(settingsHelper.settingsForSubprojectCalled("core"))
+  .settings(
+    skip in publish := true,
+  )
 
 lazy val testing = project
   .in(file("testing"))
