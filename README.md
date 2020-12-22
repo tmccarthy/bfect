@@ -72,3 +72,12 @@ def printHello3[F[_, _] : Sync]: F[Nothing, Unit] =
     _     <- print1(hello)
   } yield ()
 ```
+
+### Cats interoperation
+
+The `bfect-interop-cats` package provides implicits for interoperation with Cats. This includes instances
+for effect types using `EitherT`. The easiest way to access these is with the following import:
+
+```scala
+import au.id.tmm.bfect.interop.cats.implicits._
+```
