@@ -5,7 +5,7 @@ import au.id.tmm.bfect.{ExitCase, Failure}
 
 class CatsSyncForBfectSync[F[_, _]](implicit bfectBracket: Bracket[F], bfectSync: Sync[F])
     extends CatsMonadErrorForBfectBME[F, Throwable]
-    with cats.effect.Sync[F[Throwable, ?]] {
+    with cats.effect.Sync[F[Throwable, *]] {
   override def suspend[A](thunk: => F[Throwable, A]): F[Throwable, A] = bfectSync.suspend(thunk)
 
   override def bracketCase[A, B](
@@ -34,7 +34,7 @@ class CatsSyncForBfectSync[F[_, _]](implicit bfectBracket: Bracket[F], bfectSync
 
 object CatsSyncForBfectSync {
   trait ToCatsSync {
-    implicit def bfectSyncIsCatsSync[F[_, _] : Sync : Bracket]: cats.effect.Sync[F[Throwable, ?]] =
+    implicit def bfectSyncIsCatsSync[F[_, _] : Sync : Bracket]: cats.effect.Sync[F[Throwable, *]] =
       new CatsSyncForBfectSync[F]()
   }
 }

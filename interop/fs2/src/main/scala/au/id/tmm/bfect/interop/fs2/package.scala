@@ -20,9 +20,9 @@ import au.id.tmm.bfect.effects.{Bracket, Sync}
 
 package object fs2 {
 
-  type Fs2Compiler[F[+_, +_]] = Stream.Compiler[F[Throwable, +?], F[Throwable, +?]]
+  type Fs2Compiler[F[+_, +_]] = Stream.Compiler[F[Throwable, +*], F[Throwable, +*]]
 
   implicit def fs2CompilerForBfect[F[+_, +_] : Sync : Bracket]: Fs2Compiler[F] =
-    Stream.Compiler.syncInstance[F[Throwable, +?]](cats.instances.sync.bfectSyncIsCatsSync)
+    Stream.Compiler.syncInstance[F[Throwable, +*]](cats.instances.sync.bfectSyncIsCatsSync)
 
 }

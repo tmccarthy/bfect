@@ -23,7 +23,7 @@ class BfectToCatsTypeclassConversionsSpec extends AnyFlatSpec {
   "the monad instance" should "be resolved without difficulty" in {
     import implicits._
 
-    cats.Monad[WrappedEither[Nothing, ?]]
+    cats.Monad[WrappedEither[Nothing, *]]
 
     succeed
   }
@@ -31,7 +31,7 @@ class BfectToCatsTypeclassConversionsSpec extends AnyFlatSpec {
   "the MonadError instance" should "be resolved without difficulty" in {
     import implicits._
 
-    cats.MonadError[WrappedEither[Nothing, ?], Nothing]
+    cats.MonadError[WrappedEither[Nothing, *], Nothing]
 
     succeed
   }
