@@ -14,6 +14,9 @@ class BifunctorMonadErrorSyntaxSpec[F[_, _] : BME] {
     makeF[String, Int].catchLeft {
       case e: CharSequence => makeF[CharSequence, Int]
     }
+    makeF[String, Int].onLeft {
+      case e: CharSequence => makeF[Nothing, Unit]
+    }
   }
 
   {
@@ -24,6 +27,9 @@ class BifunctorMonadErrorSyntaxSpec[F[_, _] : BME] {
     }
     makeF[Nothing, Int].catchLeft {
       case e: CharSequence => makeF[CharSequence, Int]
+    }
+    makeF[Nothing, Int].onLeft {
+      case e: CharSequence => makeF[Nothing, Unit]
     }
   }
 
@@ -36,6 +42,9 @@ class BifunctorMonadErrorSyntaxSpec[F[_, _] : BME] {
     makeF[String, Nothing].catchLeft {
       case e: CharSequence => makeF[CharSequence, Nothing]
     }
+    makeF[String, Nothing].onLeft {
+      case e: CharSequence => makeF[Nothing, Unit]
+    }
   }
 
   {
@@ -46,6 +55,9 @@ class BifunctorMonadErrorSyntaxSpec[F[_, _] : BME] {
     }
     makeF[Nothing, Nothing].catchLeft {
       case e: CharSequence => makeF[CharSequence, Nothing]
+    }
+    makeF[Nothing, Nothing].onLeft {
+      case e: CharSequence => makeF[Nothing, Unit]
     }
   }
 

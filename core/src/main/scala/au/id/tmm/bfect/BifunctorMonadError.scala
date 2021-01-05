@@ -34,6 +34,11 @@ trait BifunctorMonadError[F[_, _]] extends BifunctorMonad[F] {
   def catchLeft[E1, A, E2 >: E1](fea: F[E1, A])(catchPf: PartialFunction[E1, F[E2, A]]): F[E2, A] =
     recoverWith[E1, A, E2](fea)(catchPf)
 
+  def onLeft[E, A](fea: F[E, A])(onPf: PartialFunction[E, F[Nothing, Unit]]): F[E, A] =
+    handleErrorWith(fea) { e =>
+      onPf.andThen(f => flatMap(f)(_ => leftPure[E, A](e))).applyOrElse(e, (_: E) => fea)
+    }
+
   def attempt[E, A](fea: F[E, A]): F[Nothing, Either[E, A]] =
     handleErrorWith[E, Either[E, A], Nothing] {
       rightMap(fea)(a => Right(a): Either[E, A])
@@ -78,6 +83,7 @@ object BifunctorMonadError extends BifunctorMonadErrorStaticOps {
     def handleErrorWith[E2 >: E](f: E => F[E2, A]): F[E2, A]                  = bme.handleErrorWith[E, A, E2](fea)(f)
     def recoverWith[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A] = bme.recoverWith[E, A, E2](fea)(catchPf)
     def catchLeft[E2 >: E](catchPf: PartialFunction[E, F[E2, A]]): F[E2, A]   = bme.catchLeft[E, A, E2](fea)(catchPf)
+    def onLeft(onPf: PartialFunction[E, F[Nothing, Unit]]): F[E, A]           = bme.onLeft(fea)(onPf)
   }
 
   implicit val bifunctorMonadErrorBiInvariantK: BiInvariantK[BifunctorMonadError] =
