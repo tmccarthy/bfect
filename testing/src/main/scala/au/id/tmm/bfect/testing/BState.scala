@@ -77,7 +77,7 @@ object BState {
 
   def rightInspect[S, A](f: S => A): BState[S, Nothing, A] = inspect(f.andThen(Right.apply))
 
-  trait BMEInstance[S] extends BME[BState[S, +?, +?]] {
+  trait BMEInstance[S] extends BME[BState[S, +*, +*]] {
     override def rightPure[E, A](a: A): BState[S, E, A] = BState.pure(a)
 
     override def leftPure[E, A](e: E): BState[S, E, A] = BState.leftPure(e)
@@ -96,25 +96,25 @@ object BState {
 
   trait ConcurrentInstance[S]
       extends BMEInstance[S]
-      with Concurrent.WithBMonad[BState[S, +?, +?]]
-      with Async[BState[S, +?, +?]]
-      with Bracket.WithBMonad[BState[S, +?, +?]]
-      with Timer.WithBMonad[BState[S, +?, +?]] {
+      with Concurrent.WithBMonad[BState[S, +*, +*]]
+      with Async[BState[S, +*, +*]]
+      with Bracket.WithBMonad[BState[S, +*, +*]]
+      with Timer.WithBMonad[BState[S, +*, +*]] {
 
-    private def asFibre[E, A](fea: BState[S, E, A]): Fibre[BState[S, +?, +?], E, A] =
-      new Fibre[BState[S, +?, +?], E, A] {
+    private def asFibre[E, A](fea: BState[S, E, A]): Fibre[BState[S, +*, +*], E, A] =
+      new Fibre[BState[S, +*, +*], E, A] {
         override def cancel: BState[S, Nothing, Unit] = BState[S, Nothing, Unit](d => (d, Right(())))
 
         override def join: BState[S, E, A] = fea
       }
 
-    override def start[E, A](fea: BState[S, E, A]): BState[S, Nothing, Fibre[BState[S, +?, +?], E, A]] =
+    override def start[E, A](fea: BState[S, E, A]): BState[S, Nothing, Fibre[BState[S, +*, +*], E, A]] =
       pure(asFibre(fea))
 
     override def racePair[E, A, B](
       fea: BState[S, E, A],
       feb: BState[S, E, B],
-    ): BState[S, E, Either[(A, Fibre[BState[S, +?, +?], E, B]), (Fibre[BState[S, +?, +?], E, A], B)]] =
+    ): BState[S, E, Either[(A, Fibre[BState[S, +*, +*], E, B]), (Fibre[BState[S, +*, +*], E, A], B)]] =
       if (Random.nextBoolean()) {
         fea.map(a => Left((a, asFibre(feb))))
       } else {
@@ -149,7 +149,7 @@ object BState {
 
     override def bracketCase[R, E, A](
       acquire: BState[S, E, R],
-      release: (R, ExitCase[E, A]) => BState[S, Nothing, _],
+      release: (R, ExitCase[E, Unit]) => BState[S, Nothing, _],
       use: R => BState[S, E, A],
     ): BState[S, E, A] =
       BState { state =>
@@ -159,7 +159,7 @@ object BState {
           case Right(acquired) =>
             use(acquired).run(stateAfterAcquisition) match {
               case (stateAfterUse, Right(resultAfterUse)) =>
-                release(acquired, ExitCase.Succeeded(resultAfterUse)).map(_ => resultAfterUse).run(stateAfterUse)
+                release(acquired, ExitCase.Succeeded(())).map(_ => resultAfterUse).run(stateAfterUse)
 
               case (stateAfterUse, Left(error)) =>
                 release(acquired, ExitCase.Failed(Failure.Checked(error)))
@@ -197,7 +197,7 @@ object BState {
     protected def applySleepToState(sleepDuration: Duration, state: S): S
   }
 
-  trait TimerInstance[S] extends ConcurrentInstance[S] with Timer.WithBMonad[BState[S, +?, +?]] {
+  trait TimerInstance[S] extends ConcurrentInstance[S] with Timer.WithBMonad[BState[S, +*, +*]] {
     protected def nowFromState(state: S): (S, Instant)
 
     protected def applySleepToState(sleepDuration: Duration, state: S): S
@@ -219,16 +219,16 @@ object BState {
     *   not alter the state.
     * - an instance for `Resources` that reads the live resources
     */
-  trait CompleteConcurrentInstance[S] extends ConcurrentInstance[S] with Resources.Live[BState[S, +?, +?]] {
+  trait CompleteConcurrentInstance[S] extends ConcurrentInstance[S] with Resources.Live[BState[S, +*, +*]] {
     override def nowFromState(state: S): (S, Instant)                    = (state, Instant.EPOCH)
     override def applySleepToState(sleepDuration: Duration, state: S): S = state
   }
 
-  implicit def concurrentInstance[S]: Concurrent[BState[S, +?, +?]]
-    with Concurrent[BState[S, +?, +?]]
-    with Async[BState[S, +?, +?]]
-    with Bracket[BState[S, +?, +?]]
-    with Timer[BState[S, +?, +?]]
-    with Resources[BState[S, +?, +?]] = new CompleteConcurrentInstance[S] {}
+  implicit def concurrentInstance[S]: Concurrent[BState[S, +*, +*]]
+    with Concurrent[BState[S, +*, +*]]
+    with Async[BState[S, +*, +*]]
+    with Bracket[BState[S, +*, +*]]
+    with Timer[BState[S, +*, +*]]
+    with Resources[BState[S, +*, +*]] = new CompleteConcurrentInstance[S] {}
 
 }

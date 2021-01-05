@@ -13,7 +13,7 @@
   *    See the License for the specific language governing permissions and
   *    limitations under the License.
   */
-package au.id.tmm.bfect.ziointerop
+package au.id.tmm.bfect.interop.zio
 
 import java.time._
 import java.util.concurrent.TimeUnit
@@ -63,12 +63,12 @@ object ZioInstanceMixins {
 
     override def bracketCase[R, E, A](
       acquire: IO[E, R],
-      release: (R, ExitCase[E, A]) => IO[Nothing, _],
+      release: (R, ExitCase[E, Unit]) => IO[Nothing, _],
       use: R => IO[E, A],
     ): IO[E, A] = {
       val releaseForZioBracket: (R, zio.Exit[E, A]) => IO[Nothing, _] = {
         case (resource, zioExit) =>
-          release(resource, bfectExitCaseFrom(zioExit))
+          release(resource, bfectExitCaseFrom(zioExit).as(()))
       }
 
       IO.bracketExit[E, R, A](acquire, releaseForZioBracket, use)
@@ -192,23 +192,23 @@ object ZioInstanceMixins {
 }
 
 trait ZioInstances {
-  import ziointerop.{ZioInstanceMixins => Mixins}
 
-  implicit val zioInstance: Mixins.ZioBifunctor
-    with Mixins.ZioBMonad
-    with Mixins.ZioBME
-    with Mixins.ZioBracket
-    with Mixins.ZioDie
-    with Mixins.ZioSync
-    with Mixins.ZioAsync
-    with Mixins.ZioTimer
-    with Mixins.ZioConcurrent
+  implicit val zioInstance: ZioInstanceMixins.ZioBifunctor
+    with ZioInstanceMixins.ZioBMonad
+    with ZioInstanceMixins.ZioBME
+    with ZioInstanceMixins.ZioBracket
+    with ZioInstanceMixins.ZioDie
+    with ZioInstanceMixins.ZioSync
+    with ZioInstanceMixins.ZioAsync
+    with ZioInstanceMixins.ZioTimer
+    with ZioInstanceMixins.ZioConcurrent
     with Calendar.Live[IO]
     with Console.Live[IO]
     with EnvVars.Live[IO]
     with Resources.Live[IO] =
-    new Mixins.ZioBifunctor with Mixins.ZioBMonad with Mixins.ZioBME with Mixins.ZioBracket with Mixins.ZioDie
-    with Mixins.ZioSync with Mixins.ZioAsync with Mixins.ZioTimer with Mixins.ZioConcurrent with Calendar.Live[IO]
-    with Console.Live[IO] with EnvVars.Live[IO] with Resources.Live[IO]
+    new ZioInstanceMixins.ZioBifunctor with ZioInstanceMixins.ZioBMonad with ZioInstanceMixins.ZioBME
+    with ZioInstanceMixins.ZioBracket with ZioInstanceMixins.ZioDie with ZioInstanceMixins.ZioSync
+    with ZioInstanceMixins.ZioAsync with ZioInstanceMixins.ZioTimer with ZioInstanceMixins.ZioConcurrent
+    with Calendar.Live[IO] with Console.Live[IO] with EnvVars.Live[IO] with Resources.Live[IO]
 
 }

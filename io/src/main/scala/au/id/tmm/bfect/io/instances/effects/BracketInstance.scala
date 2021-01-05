@@ -24,7 +24,7 @@ class BracketInstance private[instances] () extends BMEInstance with Bracket[IO]
 
   override def bracketCase[R, E, A](
     acquire: IO[E, R],
-    release: (R, ExitCase[E, A]) => IO[Nothing, _],
+    release: (R, ExitCase[E, Unit]) => IO[Nothing, _],
     use: R => IO[E, A],
   ): IO[E, A] =
     IO.bracketCase(acquire)(release)(use)
@@ -39,7 +39,7 @@ class BracketInstance private[instances] () extends BMEInstance with Bracket[IO]
   override def ensure[E, A](fea: IO[E, A])(finalizer: IO[Nothing, _]): IO[E, A] =
     fea.ensure(finalizer)
 
-  override def ensureCase[E, A](fea: IO[E, A])(finalizer: ExitCase[E, A] => IO[Nothing, _]): IO[E, A] =
+  override def ensureCase[E, A](fea: IO[E, A])(finalizer: ExitCase[E, Unit] => IO[Nothing, _]): IO[E, A] =
     fea.ensureCase(finalizer)
 
 }

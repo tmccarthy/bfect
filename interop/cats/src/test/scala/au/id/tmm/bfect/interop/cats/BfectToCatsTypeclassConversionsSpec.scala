@@ -13,24 +13,25 @@
   *    See the License for the specific language governing permissions and
   *    limitations under the License.
   */
-package au.id.tmm.bfect.catsinterop
+package au.id.tmm.bfect.interop.cats
 
+import au.id.tmm.bfect.WrappedEither
 import org.scalatest.flatspec.AnyFlatSpec
 
 class BfectToCatsTypeclassConversionsSpec extends AnyFlatSpec {
 
   "the monad instance" should "be resolved without difficulty" in {
-    import au.id.tmm.bfect.instances.either._
+    import implicits._
 
-    cats.Monad[Either[Nothing, ?]]
+    cats.Monad[WrappedEither[Nothing, *]]
 
     succeed
   }
 
   "the MonadError instance" should "be resolved without difficulty" in {
-    import au.id.tmm.bfect.instances.either._
+    import implicits._
 
-    cats.MonadError[Either[Nothing, ?], Nothing]
+    cats.MonadError[WrappedEither[Nothing, *], Nothing]
 
     succeed
   }

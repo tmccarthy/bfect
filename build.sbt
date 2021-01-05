@@ -32,6 +32,9 @@ lazy val io = project
   .in(file("io"))
   .settings(settingsHelper.settingsForSubprojectCalled("io"))
   .dependsOn(core)
+  .settings(
+    skip in publish := true,
+  )
 
 lazy val interopCats = project
   .in(file("interop/cats"))
@@ -39,7 +42,7 @@ lazy val interopCats = project
   .settings(
     libraryDependencies += "org.typelevel" %% "cats-effect" % catsVersion,
   )
-  .dependsOn(core)
+  .dependsOn(core, core % "test->test")
 
 lazy val interopFs2 = project
   .in(file("interop/fs2"))
