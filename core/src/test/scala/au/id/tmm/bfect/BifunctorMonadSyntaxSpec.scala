@@ -9,6 +9,8 @@ class BifunctorMonadSyntaxSpec[F[_, _] : BifunctorMonad] {
   {
     makeF[Int, String].flatMap(s => makeF[Int, Byte]): F[Int, Byte]
 
+    makeF[Int, String] >> (_ => makeF[Int, Byte]): F[Int, Byte]
+
     lazy val _ = makeF[Int, String].forever
 
     makeF[Int, F[Int, String]].flatten: F[Int, String]

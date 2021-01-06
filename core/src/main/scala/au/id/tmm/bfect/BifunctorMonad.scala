@@ -158,6 +158,7 @@ object BifunctorMonad extends BifunctorMonadStaticOps {
 
   final class Ops[F[_, _], E, A](fea: F[E, A])(implicit bifunctorMonad: BifunctorMonad[F]) {
     def flatMap[E2 >: E, B](f: A => F[E2, B]): F[E2, B] = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
+    def >>[E2 >: E, B](f: A => F[E2, B]): F[E2, B]      = bifunctorMonad.flatMap[E, E2, A, B](fea)(f)
     def forever: F[E, Nothing]                          = bifunctorMonad.forever(fea)
   }
 
