@@ -1,4 +1,4 @@
-val settingsHelper = ProjectSettingsHelper("au.id.tmm","bfect")()
+val settingsHelper = ProjectSettingsHelper("au.id.tmm", "bfect")()
 
 settingsHelper.settingsForBuild
 
@@ -40,7 +40,14 @@ lazy val interopCats = project
   .in(file("interop/cats"))
   .settings(settingsHelper.settingsForSubprojectCalled("interop-cats"))
   .settings(
-    libraryDependencies += "org.typelevel" %% "cats-effect" % catsVersion,
+    libraryDependencies ++= Seq(
+      "org.typelevel"              %% "cats-effect"               % catsVersion,
+      "org.typelevel"              %% "cats-laws"                 % catsVersion % Test,
+      "org.typelevel"              %% "cats-effect-laws"          % "2.3.1" % Test,
+      "org.typelevel"              %% "discipline-scalatest"      % "2.1.1" % Test,
+      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % Test,
+      "org.scalatestplus"          %% "scalacheck-1-15"           % "3.2.3.0" % Test,
+    ),
   )
   .dependsOn(core, core % "test->test")
 
